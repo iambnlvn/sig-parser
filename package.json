@@ -1,0 +1,22 @@
+{
+  "name": "parser",
+  "module": "/src/parser.ts",
+  "type": "module",
+  "licence": "MIT",
+  "version": "0.0.1",
+  "author": {
+    "name": "iambnlvn",
+    "email": "iambnlvn@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iambnlvn/parser.git"
+  },
+  "scripts": {},
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
