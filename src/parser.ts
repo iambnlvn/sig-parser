@@ -1,43 +1,76 @@
 import { ASTNode, Tokenizer } from "./tokenizer";
 
+export type AST = {
+  type: string;
+  body: { type: string; expression: ASTNode | undefined }[];
+};
 export class Parser {
-  str: string;
-  tokenizer: Tokenizer;
-  lookAhead: any;
+  protected str: string;
+  protected tokenizer: Tokenizer;
+  private lookAhead: ASTNode | null;
   constructor() {
     this.str = "";
     this.tokenizer = new Tokenizer();
     this.lookAhead = null;
   }
 
-  parse(input: string) {
+  public Parse(input: string): AST {
     this.str = input;
     this.tokenizer.init(this.str);
     this.lookAhead = this.tokenizer.getNextToken();
     return this.Program();
   }
 
-  Program() {
-    return { type: "Program", body: this.Literal() };
+  private Program() {
+    return { type: "Program", body: this.StatementList() };
   }
-  Literal() {
+  private StatementList() {
+    const statementList = [this.Statement()];
+    while (this.lookAhead && !this.tokenizer.isEOF()) {
+      statementList.push(this.Statement());
+    }
+    return statementList;
+  }
+
+  private Statement() {
+    return this.ExpressionStatement();
+  }
+  private ExpressionStatement() {
+    const expression = this.Expression();
+    this.consume("SEMICOLON");
+
+    return {
+      type: "ExpressionStatement",
+      expression,
+    };
+  }
+  private Expression() {
+    return this.Literal();
+  }
+
+  private Literal() {
+    if (!this.lookAhead) throw new SyntaxError("Unexpected end of input");
     switch (this.lookAhead.type) {
       case "NUMBER":
         return this.NumericLiteral();
       case "STRING":
         return this.StringLiteral();
+      default:
+        throw new SyntaxError(
+          `Unexpected token type: "${this.lookAhead.type}"`
+        );
     }
   }
-  consume(tokenType: string): ASTNode {
+  private consume(tokenType: string): ASTNode {
     const token = this.lookAhead;
     if (!token) {
       throw new SyntaxError(
-        `Unexpected end of input, expected: "${tokenType}"`,
+        `Unexpected end of input, expected: "${tokenType}"`
       );
     }
     if (token.type !== tokenType) {
       throw new SyntaxError(
-        `Unexpected token: "${token.value}", expected: "${tokenType}"`,
+        `Unexpected token: "${token.value}", expected: "${tokenType}"`
       );
     }
 
@@ -46,16 +79,18 @@ export class Parser {
   }
 
   NumericLiteral(): ASTNode {
+    let num: number | string = Number(this.lookAhead?.value);
+    this.consume("NUMBER");
     return {
       type: "NumericLiteral",
-      value: Number(this.str),
+      value: Number(num),
     };
   }
   StringLiteral(): ASTNode {
-    const token = this.consume("STRING");
+    let token = this.consume("STRING");
     return {
       type: "StringLiteral",
-      value: token.value.slice(1, -1),
+      value: token.value?.slice(1, -1),
     };
   }
 }
