@@ -1,16 +1,17 @@
+import { ASTNode } from "./types";
+
 const LangSpec: [RegExp, string | null][] = [
-  [/^\s+/, null], //whitespace
-  [/^\/\/.*/, null], //sinle line comments
-  [/^\/\*[\s\S]*?\*\//, null], //multi line comments
-  [/^\d+/, "NUMBER"], // number
-  [/^"[^"]*"/, "STRING"], //double quotes
-  [/^'[^']*'/, "STRING"], //single quotes
-  [/^;/, "SEMICOLON"], //semicolon
+  [/^\s+/, null],
+  [/^\/\/.*/, null],
+  [/^\/\*[\s\S]*?\*\//, null],
+  [/^\d+/, "NUMBER"],
+  [/^"[^"]*"/, "STRING"],
+  [/^'[^']*'/, "STRING"],
+  [/^;/, "SEMICOLON"],
+  [/^\{/, "{"],
+  [/^\}/, "}"],
 ];
-export type ASTNode = {
-  type: string;
-  value: any;
-};
+
 export class Tokenizer {
   cursor: number;
   str: string;
@@ -37,7 +38,7 @@ export class Tokenizer {
     this.cursor += matched[0].length;
     return matched[0];
   }
-  public getNextToken(): ASTNode | null {
+  public getNextToken(): ASTNode<string | number> | null {
     if (!this.hasNextToken()) {
       return null;
     }
