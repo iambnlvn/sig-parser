@@ -24,7 +24,7 @@ export class Parser {
   private Program() {
     return { type: "Program", body: this.StatementList() };
   }
-  private StatementList() {
+  private StatementList(): { type: string; expression: ASTNode | undefined }[] {
     const statementList = [this.Statement()];
     while (this.lookAhead && !this.tokenizer.isEOF()) {
       statementList.push(this.Statement());
@@ -32,7 +32,7 @@ export class Parser {
     return statementList;
   }
 
-  private Statement() {
+  private Statement(): { type: string; expression: ASTNode | undefined } {
     return this.ExpressionStatement();
   }
   private ExpressionStatement() {
@@ -44,11 +44,11 @@ export class Parser {
       expression,
     };
   }
-  private Expression() {
+  private Expression(): ASTNode {
     return this.Literal();
   }
 
-  private Literal() {
+  private Literal(): ASTNode {
     if (!this.lookAhead) throw new SyntaxError("Unexpected end of input");
     switch (this.lookAhead.type) {
       case "NUMBER":
