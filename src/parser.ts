@@ -1,67 +1,93 @@
-import { ASTNode, Tokenizer } from "./tokenizer";
+import { Tokenizer } from "./tokenizer";
+import {
+  ASTNode,
+  ExpressionStatement,
+  EmptyStatement,
+  BlockStatement,
+  Statement,
+  Program,
+} from "./types";
 
-export type AST = {
-  type: string;
-  body: { type: string; expression: ASTNode | undefined }[];
-};
 export class Parser {
   protected str: string;
   protected tokenizer: Tokenizer;
-  private lookAhead: ASTNode | null;
+  private lookAhead: ASTNode<string | number> | null;
   constructor() {
     this.str = "";
     this.tokenizer = new Tokenizer();
     this.lookAhead = null;
   }
 
-  public Parse(input: string): AST {
+  public Parse(input: string) {
     this.str = input;
     this.tokenizer.init(this.str);
     this.lookAhead = this.tokenizer.getNextToken();
     return this.Program();
   }
 
-  private Program() {
+  private Program(): Program {
     return { type: "Program", body: this.StatementList() };
   }
-  private StatementList(): { type: string; expression: ASTNode | undefined }[] {
+  private StatementList(stopLookAhead: string | null = null): Statement[] {
     const statementList = [this.Statement()];
-    while (this.lookAhead && !this.tokenizer.isEOF()) {
+    while (this.lookAhead?.type !== stopLookAhead && !this.tokenizer.isEOF()) {
       statementList.push(this.Statement());
     }
     return statementList;
   }
 
-  private Statement(): { type: string; expression: ASTNode | undefined } {
-    return this.ExpressionStatement();
+  private Statement(): Statement {
+    switch (this.lookAhead?.type) {
+      case "SEMICOLON":
+        return this.EmptyStatement();
+      case "{":
+        return this.BlockStatement();
+      default:
+        return this.ExpressionStatement();
+    }
   }
-  private ExpressionStatement() {
+
+  private BlockStatement(): BlockStatement {
+    this.consume("{");
+    const body = this.lookAhead?.type !== "}" ? this.StatementList("}") : [];
+    this.consume("}");
+    return {
+      type: "BlockStatement",
+      body,
+    };
+  }
+
+  private ExpressionStatement(): ExpressionStatement {
     const expression = this.Expression();
     this.consume("SEMICOLON");
-
     return {
       type: "ExpressionStatement",
       expression,
     };
   }
-  private Expression(): ASTNode {
+
+  private EmptyStatement(): EmptyStatement {
+    this.consume("SEMICOLON");
+    return {
+      type: "EmptyStatement",
+    };
+  }
+
+  private Expression(): ASTNode<string | number> {
     return this.Literal();
   }
 
-  private Literal(): ASTNode {
+  private Literal(): ASTNode<string | number> {
     if (!this.lookAhead) throw new SyntaxError("Unexpected end of input");
     switch (this.lookAhead.type) {
       case "NUMBER":
         return this.NumericLiteral();
       case "STRING":
         return this.StringLiteral();
-      default:
-        throw new SyntaxError(
-          `Unexpected token type: "${this.lookAhead.type}"`
-        );
     }
+    throw new SyntaxError(`Unexpected token type: "${this.lookAhead.type}"`);
   }
-  private consume(tokenType: string): ASTNode {
+  private consume(tokenType: string): ASTNode<string | number> {
     const token = this.lookAhead;
     if (!token) {
       throw new SyntaxError(
@@ -78,7 +104,7 @@ export class Parser {
     return token;
   }
 
-  NumericLiteral(): ASTNode {
+  NumericLiteral(): ASTNode<number> {
     let num: number | string = Number(this.lookAhead?.value);
     this.consume("NUMBER");
     return {
@@ -86,11 +112,14 @@ export class Parser {
       value: Number(num),
     };
   }
-  StringLiteral(): ASTNode {
+  StringLiteral(): ASTNode<string> {
     let token = this.consume("STRING");
     return {
       type: "StringLiteral",
-      value: token.value?.slice(1, -1),
+      value:
+        typeof token.value === "string"
+          ? token.value.slice(1, -1)
+          : String(token.value),
     };
   }
 }
