@@ -1,5 +1,5 @@
 {
-  "name": "parser",
+  "name": "sig parser",
   "module": "/src/parser.ts",
   "type": "module",
   "licence": "MIT",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/iambnlvn/parser.git"
+    "url": "https://github.com/iambnlvn/sig-parser.git"
   },
   "scripts": {},
   "devDependencies": {
