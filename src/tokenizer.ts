@@ -1,10 +1,11 @@
 const LangSpec: [RegExp, string | null][] = [
+  [/^\s+/, null], //whitespace
+  [/^\/\/.*/, null], //sinle line comments
+  [/^\/\*[\s\S]*?\*\//, null], //multi line comments
   [/^\d+/, "NUMBER"], // number
   [/^"[^"]*"/, "STRING"], //double quotes
   [/^'[^']*'/, "STRING"], //single quotes
-  [/^\s+/, null], //whitespace
-  [/^\/\/.*/, null], //sinle line comments
-  [/^\/\*[\s\S]*?\*\//, null], // multi line comments
+  [/^;/, "SEMICOLON"], //semicolon
 ];
 export type ASTNode = {
   type: string;
@@ -18,44 +19,47 @@ export class Tokenizer {
     this.cursor = 0;
     this.str = "";
   }
-  init(input: string) {
-    this.cursor = 0;
+  public init(input: string) {
     this.str = input;
   }
 
-  isEOF(): boolean {
+  public isEOF(): boolean {
     return this.str.length === this.cursor;
   }
-  hasNextToken(): boolean {
+
+  public hasNextToken(): boolean {
     return this.cursor < this.str.length;
   }
-  match(regExpr: RegExp, string: string) {
+
+  private match(regExpr: RegExp, string: string): string | null {
     const matched = regExpr.exec(string);
     if (!matched) return null;
-    if (matched) {
-      this.cursor = matched[0].length;
-      return matched[0];
-    }
+    this.cursor += matched[0].length;
+    return matched[0];
   }
-  getNextToken(): ASTNode | SyntaxError | null {
+  public getNextToken(): ASTNode | null {
     if (!this.hasNextToken()) {
       return null;
     }
 
-    const string = this.str.slice(this.cursor);
+    let string = this.str.slice(this.cursor);
+
     for (const [regExpr, tokenType] of LangSpec) {
       const tokenValue = this.match(regExpr, string);
+
       if (!tokenValue) {
         continue;
       }
+
       if (!tokenType) {
         return this.getNextToken();
       }
+
       return {
         type: tokenType,
         value: tokenValue,
       };
     }
-    throw new SyntaxError(`Unexpected token: "${string[0]}"`);
+    return null;
   }
 }
