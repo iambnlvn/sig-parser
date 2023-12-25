@@ -6,16 +6,26 @@ import {
   BlockStatement,
   Statement,
   Program,
+  Token,
+  ExpressionType,
+  Operator,
 } from "./types";
 
 export class Parser {
   protected str: string;
   protected tokenizer: Tokenizer;
-  private lookAhead: ASTNode<string | number> | null;
+  protected ExpressionMethods: Map<ExpressionType, Function>;
+  private lookAhead: Token | null;
+
   constructor() {
     this.str = "";
     this.tokenizer = new Tokenizer();
     this.lookAhead = null;
+    this.ExpressionMethods = new Map([
+      ["PrimaryExpression", this.PrimaryExpression],
+      ["MulExpression", this.MulExpression],
+      ["ModExpression", this.ModExpression],
+    ]);
   }
 
   public Parse(input: string) {
@@ -40,7 +50,7 @@ export class Parser {
     switch (this.lookAhead?.type) {
       case "SEMICOLON":
         return this.EmptyStatement();
-      case "{":
+      case "LBRACE":
         return this.BlockStatement();
       default:
         return this.ExpressionStatement();
@@ -48,21 +58,13 @@ export class Parser {
   }
 
   private BlockStatement(): BlockStatement {
-    this.consume("{");
-    const body = this.lookAhead?.type !== "}" ? this.StatementList("}") : [];
-    this.consume("}");
+    this.consume("LBRACE");
+    const body =
+      this.lookAhead?.type !== "RBRACE" ? this.StatementList("RBRACE") : [];
+    this.consume("RBRACE");
     return {
       type: "BlockStatement",
       body,
-    };
-  }
-
-  private ExpressionStatement(): ExpressionStatement {
-    const expression = this.Expression();
-    this.consume("SEMICOLON");
-    return {
-      type: "ExpressionStatement",
-      expression,
     };
   }
 
@@ -72,12 +74,59 @@ export class Parser {
       type: "EmptyStatement",
     };
   }
-
-  private Expression(): ASTNode<string | number> {
-    return this.Literal();
+  private ExpressionStatement(): ExpressionStatement {
+    const expression = this.Expression();
+    this.consume("SEMICOLON");
+    return {
+      type: "ExpressionStatement",
+      expression,
+    };
   }
 
-  private Literal(): ASTNode<string | number> {
+  private Expression(): ASTNode {
+    return this.AdditiveExpression();
+  }
+  private AdditiveExpression(): ASTNode {
+    return this.BinaryExpression("MulExpression", "ADD_OP");
+  }
+  private MulExpression(): ASTNode {
+    return this.BinaryExpression("ModExpression", "MUL_OP");
+  }
+  private ModExpression(): ASTNode {
+    return this.BinaryExpression("PrimaryExpression", "MOD_OP");
+  }
+  protected BinaryExpression(expType: ExpressionType, op: Operator): ASTNode {
+    const exprMethod = this.ExpressionMethods.get(expType);
+    if (!exprMethod)
+      throw new SyntaxError(`Unexpected expression type: "${expType}"`);
+    let left: ASTNode = exprMethod.call(this);
+    while (this.lookAhead?.type === op) {
+      const operator = this.consume(op).value;
+      const right: ASTNode = exprMethod.call(this);
+      left = {
+        type: "BinaryExpression",
+        operator,
+        left,
+        right,
+      };
+    }
+    return left;
+  }
+  private PrimaryExpression(): ASTNode {
+    switch (this.lookAhead?.type) {
+      case "LPAREN":
+        return this.ParenthesizedExpression();
+      default:
+        return this.Literal();
+    }
+  }
+  private ParenthesizedExpression(): ASTNode {
+    this.consume("LPAREN");
+    const expression = this.Expression();
+    this.consume("RPAREN");
+    return expression;
+  }
+  private Literal(): ASTNode {
     if (!this.lookAhead) throw new SyntaxError("Unexpected end of input");
     switch (this.lookAhead.type) {
       case "NUMBER":
@@ -87,7 +136,7 @@ export class Parser {
     }
     throw new SyntaxError(`Unexpected token type: "${this.lookAhead.type}"`);
   }
-  private consume(tokenType: string): ASTNode<string | number> {
+  private consume(tokenType: Token["type"]): Token {
     const token = this.lookAhead;
     if (!token) {
       throw new SyntaxError(
@@ -104,7 +153,7 @@ export class Parser {
     return token;
   }
 
-  NumericLiteral(): ASTNode<number> {
+  NumericLiteral(): ASTNode {
     let num: number | string = Number(this.lookAhead?.value);
     this.consume("NUMBER");
     return {
@@ -112,7 +161,7 @@ export class Parser {
       value: Number(num),
     };
   }
-  StringLiteral(): ASTNode<string> {
+  StringLiteral(): ASTNode {
     let token = this.consume("STRING");
     return {
       type: "StringLiteral",
