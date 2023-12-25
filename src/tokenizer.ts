@@ -1,6 +1,6 @@
-import { ASTNode } from "./types";
+import { Token, TokenType } from "./types";
 
-const LangSpec: [RegExp, string | null][] = [
+const LangSpec: [RegExp, TokenType | null][] = [
   [/^\s+/, null],
   [/^\/\/.*/, null],
   [/^\/\*[\s\S]*?\*\//, null],
@@ -8,28 +8,36 @@ const LangSpec: [RegExp, string | null][] = [
   [/^"[^"]*"/, "STRING"],
   [/^'[^']*'/, "STRING"],
   [/^;/, "SEMICOLON"],
-  [/^\{/, "{"],
-  [/^\}/, "}"],
+  [/^\{/, "LBRACE"],
+  [/^\}/, "RBRACE"],
+  [/^\(/, "LPAREN"],
+  [/^\)/, "RPAREN"],
+  [/^[+\-]/, "ADD_OP"],
+  [/^[*\/]/, "MUL_OP"],
+  [/^%/, "MOD_OP"],
 ];
 
 export class Tokenizer {
-  cursor: number;
-  str: string;
+  private cursor: number;
+  private str: string;
+  private strLength: number;
 
   constructor() {
     this.cursor = 0;
     this.str = "";
+    this.strLength = 0;
   }
-  public init(input: string) {
+  public init(input: string): void {
     this.str = input;
+    this.strLength = input.length;
   }
 
   public isEOF(): boolean {
-    return this.str.length === this.cursor;
+    return this.strLength === this.cursor;
   }
 
   public hasNextToken(): boolean {
-    return this.cursor < this.str.length;
+    return this.cursor < this.strLength;
   }
 
   private match(regExpr: RegExp, string: string): string | null {
@@ -38,7 +46,7 @@ export class Tokenizer {
     this.cursor += matched[0].length;
     return matched[0];
   }
-  public getNextToken(): ASTNode<string | number> | null {
+  public getNextToken(): Token | null {
     if (!this.hasNextToken()) {
       return null;
     }
