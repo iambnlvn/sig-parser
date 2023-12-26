@@ -10,8 +10,9 @@ export type TokenType =
   | "RBRACE"
   | "ADD_OP"
   | "MUL_OP"
-  | "MOD_OP";
-
+  | "MOD_OP"
+  | "ASSIGNEMENT"
+  | "COMPLEXASSIGNMENT";
 export type Token = {
   type: TokenType;
   value: string;
@@ -41,12 +42,19 @@ export type ASTNode =
   | { type: "NumericLiteral"; value: number }
   | { type: "StringLiteral"; value: string }
   | {
+      type: "AssignmentExpression";
+      operator: string;
+      left: ASTNode;
+      right: ASTNode;
+    }
+  | {
       type: "BinaryExpression";
       operator: string;
       left: ASTNode;
       right: ASTNode;
     }
-  | { type: "EmptyStatement" };
+  | { type: "EmptyStatement" }
+  | { type: "Identifier"; name: string };
 
 export type ExpressionType =
   | "PrimaryExpression"
