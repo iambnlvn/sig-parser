@@ -4,22 +4,28 @@ const LangSpec: [RegExp, TokenType | null][] = [
   [/^\s+/, null],
   [/^\/\/.*/, null],
   [/^\/\*[\s\S]*?\*\//, null],
-  [/^\d+/, "NUMBER"],
-  [/^"[^"]*"/, "STRING"],
-  [/^'[^']*'/, "STRING"],
+
   [/^;/, "SEMICOLON"],
   [/^\{/, "LBRACE"],
   [/^\}/, "RBRACE"],
   [/^\(/, "LPAREN"],
   [/^\)/, "RPAREN"],
+  [/^\d+/, "NUMBER"],
+  [/^"[^"]*"/, "STRING"],
+  [/^'[^']*'/, "STRING"],
+  [/^"/, null],
+  [/^=/, "ASSIGNEMENT"],
+  [/^[\*\/\+\-]=/, "COMPLEXASSIGNMENT"],
+
   [/^[+\-]/, "ADD_OP"],
   [/^[*\/]/, "MUL_OP"],
   [/^%/, "MOD_OP"],
+  [/^[a-zA-Z_]\w*/, "IDENTIFIER"],
 ];
 
 export class Tokenizer {
-  private cursor: number;
-  private str: string;
+  public cursor: number;
+  public str: string;
   private strLength: number;
 
   constructor() {
@@ -69,6 +75,6 @@ export class Tokenizer {
         value: tokenValue,
       };
     }
-    return null;
+    throw SyntaxError(`Unexpected token at position ${this.cursor}`);
   }
 }
