@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { Parser } from "../parser";
-import { AST, Program } from "../types";
+import { AST } from "../types";
 
 let expectations = {
   comment: {
@@ -335,6 +335,134 @@ let expectations = {
       },
     ],
   },
+  asignmentExpr: {
+    type: "Program",
+    body: [
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "AssignmentExpression",
+          operator: "=",
+          left: {
+            type: "Identifier",
+            name: "x",
+          },
+          right: {
+            type: "NumericLiteral",
+            value: 11,
+          },
+        },
+      },
+    ],
+  },
+  complexAddAsignmentExpr: {
+    type: "Program",
+    body: [
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "AssignmentExpression",
+          operator: "+=",
+          left: {
+            type: "Identifier",
+            name: "x",
+          },
+          right: {
+            type: "NumericLiteral",
+            value: 11,
+          },
+        },
+      },
+    ],
+  },
+  complexSubAsignmentExpr: {
+    type: "Program",
+    body: [
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "AssignmentExpression",
+          operator: "-=",
+          left: {
+            type: "Identifier",
+            name: "x",
+          },
+          right: {
+            type: "NumericLiteral",
+            value: 11,
+          },
+        },
+      },
+    ],
+  },
+  complexMulAsignmentExpr: {
+    type: "Program",
+    body: [
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "AssignmentExpression",
+          operator: "*=",
+          left: {
+            type: "Identifier",
+            name: "x",
+          },
+          right: {
+            type: "NumericLiteral",
+            value: 11,
+          },
+        },
+      },
+    ],
+  },
+  complexDivAsignmentExpr: {
+    type: "Program",
+    body: [
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "AssignmentExpression",
+          operator: "/=",
+          left: {
+            type: "Identifier",
+            name: "x",
+          },
+          right: {
+            type: "NumericLiteral",
+            value: 11,
+          },
+        },
+      },
+    ],
+  },
+  chainedAssignmentExpr: {
+    type: "Program",
+    body: [
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "AssignmentExpression",
+          operator: "=",
+          left: {
+            type: "Identifier",
+            name: "x",
+          },
+          right: {
+            type: "AssignmentExpression",
+            operator: "=",
+            left: {
+              type: "Identifier",
+              name: "y",
+            },
+            right: {
+              type: "NumericLiteral",
+              value: 11,
+            },
+          },
+        },
+      },
+    ],
+  },
 };
 
 describe("Parser", () => {
@@ -353,45 +481,57 @@ describe("Parser", () => {
         "hello, world";
         `;
   });
-  test("should be defined", () => {
-    expect(parser).toBeDefined();
-  });
-  test("should parse the program without errors", () => {
-    let ast = parser.Parse(program);
-    expect(ast).toBeDefined();
-    expect(ast.type).toBe("Program");
-  });
-  test("should parse numbers correctly", () => {
-    let astNums = parser.Parse(`11;`);
-    expect(astNums).toBeDefined();
-    expect(getExpr(astNums, "type")).toBe("NumericLiteral");
-    expect(getExpr(astNums, "value")).toBeNumber();
-    expect(getExpr(astNums, "value")).toBe(11);
-  });
-  test("should parse string correctly", () => {
-    let astStr = parser.Parse(`"Hello, world";`);
-    expect(astStr).toBeDefined();
-    expect(getExpr(astStr, "type")).toBe("StringLiteral");
-    expect(getExpr(astStr, "value")).toBeString();
-    expect(getExpr(astStr, "value")).toBe("Hello, world");
-  });
-  test("should parse comments correctly", () => {
-    let astComments = parser.Parse(`
+
+  describe("Inner workings", () => {
+    test("should be defined", () => {
+      expect(parser).toBeDefined();
+    });
+    test("should parse the program without errors", () => {
+      let ast = parser.Parse(program);
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe("Program");
+    });
+    test("should throw an error when parsing an invalid input", () => {
+      expect(() => {
+        parser.Parse(`"hello, world`);
+      }).toThrow(SyntaxError);
+    });
+    test("should parse comments correctly", () => {
+      let astComments = parser.Parse(`
         /**
          * comment
          */
         "hello, world";
         `);
 
-    expect(astComments).toBeDefined();
-    expect(JSON.stringify(astComments)).toEqual(
-      JSON.stringify(expectations.comment)
-    );
-    expect(getExpr(astComments, "type")).toBeString();
-    expect(getExpr(astComments, "value")).toBe("hello, world");
+      expect(astComments).toBeDefined();
+      expect(JSON.stringify(astComments)).toEqual(
+        JSON.stringify(expectations.comment)
+      );
+      expect(getExpr(astComments, "type")).toBeString();
+      expect(getExpr(astComments, "value")).toBe("hello, world");
+    });
   });
-  test("should parse a expression statements correctly", () => {
-    let astSerie = parser.Parse(`
+  describe("Literal", () => {
+    test("should parse numbers correctly", () => {
+      let astNums = parser.Parse(`11;`);
+      expect(astNums).toBeDefined();
+      expect(getExpr(astNums, "type")).toBe("NumericLiteral");
+      expect(getExpr(astNums, "value")).toBeNumber();
+      expect(getExpr(astNums, "value")).toBe(11);
+    });
+    test("should parse string correctly", () => {
+      let astStr = parser.Parse(`"Hello, world";`);
+      expect(astStr).toBeDefined();
+      expect(getExpr(astStr, "type")).toBe("StringLiteral");
+      expect(getExpr(astStr, "value")).toBeString();
+      expect(getExpr(astStr, "value")).toBe("Hello, world");
+    });
+  });
+
+  describe("Statement", () => {
+    test("should parse a expression statements correctly", () => {
+      let astSerie = parser.Parse(`
 "hello internet";
         /**
          * number
@@ -403,116 +543,163 @@ describe("Parser", () => {
 "Working input series";
 `);
 
-    expect(astSerie).toBeDefined();
-    expect(JSON.stringify(astSerie)).toEqual(
-      JSON.stringify(expectations.expression)
-    );
-  });
-  test("should parse empty statements correctly", () => {
-    let emptyStatement = parser.Parse(`;`);
-    let expectedStatement = {
-      type: "Program",
-      body: [
-        {
-          type: "EmptyStatement",
-        },
-      ],
-    };
-    expect(JSON.stringify(emptyStatement)).toEqual(
-      JSON.stringify(expectedStatement)
-    );
-  });
+      expect(astSerie).toBeDefined();
+      expect(JSON.stringify(astSerie)).toEqual(
+        JSON.stringify(expectations.expression)
+      );
+    });
+    test("should parse block statements correctly", () => {
+      let parsedBlock = parser.Parse(`{"hello,world";11;}`);
 
-  test("should throw an error when parsing an invalid input", () => {
-    expect(() => {
-      parser.Parse(`"hello, world`);
-    }).toThrow(SyntaxError);
+      expect(JSON.stringify(parsedBlock)).toEqual(
+        JSON.stringify(expectations.block)
+      );
+    });
+    test("should parse empty statements correctly", () => {
+      let emptyStatement = parser.Parse(`;`);
+      let expectedStatement = {
+        type: "Program",
+        body: [
+          {
+            type: "EmptyStatement",
+          },
+        ],
+      };
+      expect(JSON.stringify(emptyStatement)).toEqual(
+        JSON.stringify(expectedStatement)
+      );
+    });
   });
-  test("should parse block statements correctly", () => {
-    let parsedBlock = parser.Parse(`{"hello,world";11;}`);
+  describe("AssignmentExpression", () => {
+    test("should parse Assignment Expression correctly", () => {
+      let parsedAssignmentExpr = parser.Parse(`x=11;`);
 
-    expect(JSON.stringify(parsedBlock)).toEqual(
-      JSON.stringify(expectations.block)
-    );
-  });
-  test("should parse Binary Addition Expression correctly", () => {
-    let parsedBinaryExpr = parser.Parse(`11 + 7;`);
+      expect(JSON.stringify(parsedAssignmentExpr)).toEqual(
+        JSON.stringify(expectations.asignmentExpr)
+      );
+    });
+    test("should parse complex Assignment Expression correctly", () => {
+      let parsedAssignmentExpr = parser.Parse(`x+=11;`);
 
-    expect(JSON.stringify(parsedBinaryExpr)).toEqual(
-      JSON.stringify(expectations.additiveAddExpr)
-    );
-  });
-  test("should parse Binary Substraction Expression correctly", () => {
-    let parsedBinaryExpr = parser.Parse(`11 - 7;`);
+      expect(JSON.stringify(parsedAssignmentExpr)).toEqual(
+        JSON.stringify(expectations.complexAddAsignmentExpr)
+      );
+    });
+    test("should parse complex Assignment Expression correctly", () => {
+      let parsedAssignmentExpr = parser.Parse(`x-=11;`);
 
-    expect(JSON.stringify(parsedBinaryExpr)).toEqual(
-      JSON.stringify(expectations.additiveSubExpr)
-    );
-  });
-  test("should parse Binary mixed Addition and substraction Expression correctly", () => {
-    let parsedBinaryExpr = parser.Parse(`11+11-7;`);
+      expect(JSON.stringify(parsedAssignmentExpr)).toEqual(
+        JSON.stringify(expectations.complexSubAsignmentExpr)
+      );
+    });
+    test("should parse complex Assignment Expression correctly", () => {
+      let parsedAssignmentExpr = parser.Parse(`x*=11;`);
 
-    expect(JSON.stringify(parsedBinaryExpr)).toEqual(
-      JSON.stringify(expectations.additiveExpr)
-    );
-  });
-  test("should parse Binary multiplication Expression correctly", () => {
-    let parsedBinaryExpr = parser.Parse(`11*7;`);
+      expect(JSON.stringify(parsedAssignmentExpr)).toEqual(
+        JSON.stringify(expectations.complexMulAsignmentExpr)
+      );
+    });
+    test("should parse complex Assignment Expression correctly", () => {
+      let parsedAssignmentExpr = parser.Parse(`x/=11;`);
 
-    expect(JSON.stringify(parsedBinaryExpr)).toEqual(
-      JSON.stringify(expectations.mulitplicativeMulExpr)
-    );
-  });
-  test("should parse Binary division Expression correctly", () => {
-    let parsedBinaryExpr = parser.Parse(`11/3;`);
+      expect(JSON.stringify(parsedAssignmentExpr)).toEqual(
+        JSON.stringify(expectations.complexDivAsignmentExpr)
+      );
+    });
+    test("should parse chained Assignment Expression correctly", () => {
+      let parsedAssignmentExpr = parser.Parse(`x=y=11;`);
 
-    expect(JSON.stringify(parsedBinaryExpr)).toEqual(
-      JSON.stringify(expectations.mulitplicativeDivExpr)
-    );
-  });
-
-  test("should parse Binary mixed Multiplication and division Expression correctly", () => {
-    let parsedBinaryExpr = parser.Parse(`11/11*7;`);
-
-    expect(JSON.stringify(parsedBinaryExpr)).toEqual(
-      JSON.stringify(expectations.mulitplicativeExpr)
-    );
+      expect(JSON.stringify(parsedAssignmentExpr)).toEqual(
+        JSON.stringify(expectations.chainedAssignmentExpr)
+      );
+    });
   });
 
-  test("should parse Binary mixed Addition and Multiplication Expression correctly", () => {
-    let parsedBinaryExpr = parser.Parse(`11 + 7 * 2;`);
+  describe("BinaryExpression", () => {
+    let parser: Parser;
+    beforeEach(() => {
+      parser = new Parser();
+    });
 
-    expect(JSON.stringify(parsedBinaryExpr)).toEqual(
-      JSON.stringify(expectations.mixedAdditiveAndMultiplicativeExpr)
-    );
-  });
+    test("should parse Binary Addition Expression correctly", () => {
+      let parsedBinaryExpr = parser.Parse(`11 + 7;`);
 
-  test("should parse Binary mixed Subtraction and Division Expression correctly", () => {
-    let parsedBinaryExpr = parser.Parse(`11 - 7 / 2;`);
+      expect(JSON.stringify(parsedBinaryExpr)).toEqual(
+        JSON.stringify(expectations.additiveAddExpr)
+      );
+    });
+    test("should parse Binary Substraction Expression correctly", () => {
+      let parsedBinaryExpr = parser.Parse(`11 - 7;`);
 
-    expect(JSON.stringify(parsedBinaryExpr)).toEqual(
-      JSON.stringify(expectations.mixedSubtractiveAndDivisiveExpr)
-    );
-  });
-  test("should parse Binary Modulo Expression correctly", () => {
-    let parsedBinaryExpr = parser.Parse(`11 % 7;`);
+      expect(JSON.stringify(parsedBinaryExpr)).toEqual(
+        JSON.stringify(expectations.additiveSubExpr)
+      );
+    });
+    test("should parse Binary mixed Addition and substraction Expression correctly", () => {
+      let parsedBinaryExpr = parser.Parse(`11+11-7;`);
 
-    expect(JSON.stringify(parsedBinaryExpr)).toEqual(
-      JSON.stringify(expectations.moduloExpr)
-    );
-  });
-  test("should parse mixed modulos and division Expression correctly", () => {
-    let parsedBinaryExpr = parser.Parse(`11 % 7 / 2;`);
+      expect(JSON.stringify(parsedBinaryExpr)).toEqual(
+        JSON.stringify(expectations.additiveExpr)
+      );
+    });
+    test("should parse Binary multiplication Expression correctly", () => {
+      let parsedBinaryExpr = parser.Parse(`11*7;`);
 
-    expect(JSON.stringify(parsedBinaryExpr)).toEqual(
-      JSON.stringify(expectations.mixedModAndDivisiveExpr)
-    );
-  });
-  test("should parse parenthesized Binary Expression correctly", () => {
-    let parsedParenExpr = parser.Parse(`(11-3)*2;`);
+      expect(JSON.stringify(parsedBinaryExpr)).toEqual(
+        JSON.stringify(expectations.mulitplicativeMulExpr)
+      );
+    });
+    test("should parse Binary division Expression correctly", () => {
+      let parsedBinaryExpr = parser.Parse(`11/3;`);
 
-    expect(JSON.stringify(parsedParenExpr)).toEqual(
-      JSON.stringify(expectations.parenthesizedBinExp)
-    );
+      expect(JSON.stringify(parsedBinaryExpr)).toEqual(
+        JSON.stringify(expectations.mulitplicativeDivExpr)
+      );
+    });
+
+    test("should parse Binary mixed Multiplication and division Expression correctly", () => {
+      let parsedBinaryExpr = parser.Parse(`11/11*7;`);
+
+      expect(JSON.stringify(parsedBinaryExpr)).toEqual(
+        JSON.stringify(expectations.mulitplicativeExpr)
+      );
+    });
+
+    test("should parse Binary mixed Addition and Multiplication Expression correctly", () => {
+      let parsedBinaryExpr = parser.Parse(`11 + 7 * 2;`);
+
+      expect(JSON.stringify(parsedBinaryExpr)).toEqual(
+        JSON.stringify(expectations.mixedAdditiveAndMultiplicativeExpr)
+      );
+    });
+
+    test("should parse Binary mixed Subtraction and Division Expression correctly", () => {
+      let parsedBinaryExpr = parser.Parse(`11 - 7 / 2;`);
+
+      expect(JSON.stringify(parsedBinaryExpr)).toEqual(
+        JSON.stringify(expectations.mixedSubtractiveAndDivisiveExpr)
+      );
+    });
+    test("should parse Binary Modulo Expression correctly", () => {
+      let parsedBinaryExpr = parser.Parse(`11 % 7;`);
+
+      expect(JSON.stringify(parsedBinaryExpr)).toEqual(
+        JSON.stringify(expectations.moduloExpr)
+      );
+    });
+    test("should parse mixed modulos and division Expression correctly", () => {
+      let parsedBinaryExpr = parser.Parse(`11 % 7 / 2;`);
+
+      expect(JSON.stringify(parsedBinaryExpr)).toEqual(
+        JSON.stringify(expectations.mixedModAndDivisiveExpr)
+      );
+    });
+    test("should parse parenthesized Binary Expression correctly", () => {
+      let parsedParenExpr = parser.Parse(`(11-3)*2;`);
+
+      expect(JSON.stringify(parsedParenExpr)).toEqual(
+        JSON.stringify(expectations.parenthesizedBinExp)
+      );
+    });
   });
 });
