@@ -10,6 +10,7 @@ import {
   ExpressionType,
   Operator,
   TokenType,
+  VariableStatement,
 } from "./types";
 
 export class Parser {
@@ -67,6 +68,8 @@ export class Parser {
         return this.EmptyStatement();
       case "LBRACE":
         return this.BlockStatement();
+      case "LET":
+        return this.VariableStatement();
       default:
         return this.ExpressionStatement();
     }
@@ -97,7 +100,41 @@ export class Parser {
       expression,
     };
   }
+  private VariableStatement(): VariableStatement {
+    this.consume("LET");
+    const declarations = this.VariableDeclarationList();
+    this.consume("SEMICOLON");
+    return {
+      type: "VariableStatement",
+      declarations,
+    };
+  }
 
+  protected VariableDeclarationList(): ASTNode[] {
+    let declarations: ASTNode[] = [];
+    do {
+      declarations.push(this.VariableDeclaration());
+    } while (this.lookAhead?.type === "COMMA" && this.consume("COMMA"));
+    return declarations;
+  }
+  private VariableDeclaration(): ASTNode {
+    const variableName = this.Identifier();
+    const variableInitialValue = !["COMMA", "SEMICOLON"].includes(
+      this.lookAhead!.type
+    )
+      ? this.VariableInitializer()
+      : null;
+
+    return {
+      type: "VariableDeclaration",
+      variableName,
+      variableInitialValue,
+    };
+  }
+  protected VariableInitializer(): ASTNode {
+    this.consume("ASSIGNEMENT");
+    return this.AssignmentExpression();
+  }
   private Expression(): ASTNode {
     return this.AssignmentExpression();
   }
@@ -214,9 +251,9 @@ export class Parser {
     if (!this.lookAhead) throw new SyntaxError("Unexpected end of input");
     switch (this.lookAhead.type) {
       case "NUMBER":
-        return this.NumericLiteral();
+        return this.CreateLiteral("NumericLiteral");
       case "STRING":
-        return this.StringLiteral();
+        return this.CreateLiteral("StringLiteral");
     }
     throw new SyntaxError(`Unexpected token type: "${this.lookAhead.type}"`);
   }
@@ -224,22 +261,25 @@ export class Parser {
     return this.literals.has(tokenType);
   }
 
-  NumericLiteral(): ASTNode {
-    let num = Number(this.lookAhead?.value);
-    this.consume("NUMBER");
-    return {
-      type: "NumericLiteral",
-      value: Number(num),
-    };
-  }
-  StringLiteral(): ASTNode {
-    let token = this.consume("STRING");
-    return {
-      type: "StringLiteral",
-      value:
-        typeof token.value === "string"
-          ? token.value.slice(1, -1)
-          : String(token.value),
-    };
+  private CreateLiteral(
+    literalType: "StringLiteral" | "NumericLiteral"
+  ): ASTNode {
+    let token: Token;
+    if (literalType === "StringLiteral") {
+      token = this.consume("STRING");
+      return {
+        type: "StringLiteral",
+        value:
+          typeof token.value === "string"
+            ? token.value.slice(1, -1)
+            : String(token.value),
+      };
+    } else {
+      token = this.consume("NUMBER");
+      return {
+        type: "NumericLiteral",
+        value: Number(Number(token.value)),
+      };
+    }
   }
 }
