@@ -463,6 +463,108 @@ let expectations = {
       },
     ],
   },
+  stringVarDeclaration: {
+    type: "Program",
+    body: [
+      {
+        type: "VariableStatement",
+        declarations: [
+          {
+            type: "VariableDeclaration",
+            variableName: {
+              type: "Identifier",
+              name: "y",
+            },
+            variableInitialValue: {
+              type: "StringLiteral",
+              value: "hello",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  numberVarDeclaration: {
+    type: "Program",
+    body: [
+      {
+        type: "VariableStatement",
+        declarations: [
+          {
+            type: "VariableDeclaration",
+            variableName: {
+              type: "Identifier",
+              name: "x",
+            },
+            variableInitialValue: {
+              type: "NumericLiteral",
+              value: 11,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  negativeNumberVarDeclaration: {
+    type: "Program",
+    body: [
+      {
+        type: "VariableStatement",
+        declarations: [
+          {
+            type: "VariableDeclaration",
+            variableName: {
+              type: "Identifier",
+              name: "x",
+            },
+            variableInitialValue: {
+              type: "NumericLiteral",
+              value: -11,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  noInitVarDeclaration: {
+    type: "Program",
+    body: [
+      {
+        type: "VariableStatement",
+        declarations: [
+          {
+            type: "VariableDeclaration",
+            variableName: {
+              type: "Identifier",
+              name: "a",
+            },
+            variableInitialValue: null,
+          },
+        ],
+      },
+    ],
+  },
+  floatNumberVarDeclaration: {
+    type: "Program",
+    body: [
+      {
+        type: "VariableStatement",
+        declarations: [
+          {
+            type: "VariableDeclaration",
+            variableName: {
+              type: "Identifier",
+              name: "x",
+            },
+            variableInitialValue: {
+              type: "NumericLiteral",
+              value: 11.5,
+            },
+          },
+        ],
+      },
+    ],
+  },
 };
 
 describe("Parser", () => {
@@ -699,6 +801,45 @@ describe("Parser", () => {
 
       expect(JSON.stringify(parsedParenExpr)).toEqual(
         JSON.stringify(expectations.parenthesizedBinExp)
+      );
+    });
+  });
+  describe("Variable declaration", () => {
+    test("should parse variable declaration correctly", () => {
+      let parsedVarDecl = parser.Parse(`let x = 11;`);
+
+      expect(JSON.stringify(parsedVarDecl)).toEqual(
+        JSON.stringify(expectations.numberVarDeclaration)
+      );
+    });
+    test("should parse variable declaration with float number correctly", () => {
+      let parsedVarDecl = parser.Parse(`let x = 11.5;`);
+
+      expect(JSON.stringify(parsedVarDecl)).toEqual(
+        JSON.stringify(expectations.floatNumberVarDeclaration)
+      );
+    });
+
+    test("should parse variable declaration with string correctly", () => {
+      let parsedVarDecl = parser.Parse(`let y = "hello";`);
+
+      expect(JSON.stringify(parsedVarDecl)).toEqual(
+        JSON.stringify(expectations.stringVarDeclaration)
+      );
+    });
+    //TODO: fix this test
+    test("should parse variable declaration with negative number correctly", () => {
+      let parsedVarDecl = parser.Parse(`let x = -11;`);
+
+      expect(JSON.stringify(parsedVarDecl)).toEqual(
+        JSON.stringify(expectations.negativeNumberVarDeclaration)
+      );
+    });
+    test("should parse variable declaration without initializer correctly", () => {
+      let parsedVarDecl = parser.Parse(`let a;`);
+
+      expect(JSON.stringify(parsedVarDecl)).toEqual(
+        JSON.stringify(expectations.noInitVarDeclaration)
       );
     });
   });
