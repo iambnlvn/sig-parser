@@ -4,22 +4,23 @@ const LangSpec: [RegExp, TokenType | null][] = [
   [/^\s+/, null],
   [/^\/\/.*/, null],
   [/^\/\*[\s\S]*?\*\//, null],
-
+  [/^\d+(\.\d+)?/, "NUMBER"],
+  [/^"[^"]*"/, "STRING"],
+  [/^'[^']*'/, "STRING"],
+  [/^\blet\b/, "LET"],
   [/^;/, "SEMICOLON"],
   [/^\{/, "LBRACE"],
   [/^\}/, "RBRACE"],
   [/^\(/, "LPAREN"],
   [/^\)/, "RPAREN"],
-  [/^\d+/, "NUMBER"],
-  [/^"[^"]*"/, "STRING"],
-  [/^'[^']*'/, "STRING"],
-  [/^"/, null],
   [/^=/, "ASSIGNEMENT"],
   [/^[\*\/\+\-]=/, "COMPLEXASSIGNMENT"],
-
   [/^[+\-]/, "ADD_OP"],
   [/^[*\/]/, "MUL_OP"],
   [/^%/, "MOD_OP"],
+  [/^,/, "COMMA"],
+  [/^"/, null],
+
   [/^[a-zA-Z_]\w*/, "IDENTIFIER"],
 ];
 
