@@ -12,13 +12,19 @@ export type TokenType =
   | "MUL_OP"
   | "MOD_OP"
   | "ASSIGNEMENT"
-  | "COMPLEXASSIGNMENT";
+  | "COMPLEXASSIGNMENT"
+  | "COMMA"
+  | "LET";
 export type Token = {
   type: TokenType;
   value: string;
 };
 
-export type Statement = ExpressionStatement | BlockStatement | EmptyStatement;
+export type Statement =
+  | ExpressionStatement
+  | BlockStatement
+  | EmptyStatement
+  | VariableStatement;
 export type EmptyStatement = {
   type: "EmptyStatement";
 };
@@ -29,6 +35,11 @@ export type ExpressionStatement = {
 export type BlockStatement = {
   type: "BlockStatement";
   body: Statement[];
+};
+
+export type VariableStatement = {
+  type: "VariableStatement";
+  declarations: ASTNode[];
 };
 export type Program = {
   type: "Program";
@@ -42,19 +53,18 @@ export type ASTNode =
   | { type: "NumericLiteral"; value: number }
   | { type: "StringLiteral"; value: string }
   | {
-      type: "AssignmentExpression";
-      operator: string;
-      left: ASTNode;
-      right: ASTNode;
-    }
-  | {
-      type: "BinaryExpression";
+      type: "AssignmentExpression" | "BinaryExpression";
       operator: string;
       left: ASTNode;
       right: ASTNode;
     }
   | { type: "EmptyStatement" }
-  | { type: "Identifier"; name: string };
+  | { type: "Identifier"; name: string }
+  | {
+      type: "VariableDeclaration";
+      variableName: ASTNode;
+      variableInitialValue?: ASTNode | null;
+    };
 
 export type ExpressionType =
   | "PrimaryExpression"
