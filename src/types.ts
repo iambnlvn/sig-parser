@@ -11,10 +11,13 @@ export type TokenType =
   | "ADD_OP"
   | "MUL_OP"
   | "MOD_OP"
+  | "COMPARISON_OP"
   | "ASSIGNEMENT"
   | "COMPLEXASSIGNMENT"
   | "COMMA"
-  | "LET";
+  | "LET"
+  | "IF"
+  | "ELSE";
 export type Token = {
   type: TokenType;
   value: string;
@@ -24,7 +27,8 @@ export type Statement =
   | ExpressionStatement
   | BlockStatement
   | EmptyStatement
-  | VariableStatement;
+  | VariableStatement
+  | ConditionalStatement;
 export type EmptyStatement = {
   type: "EmptyStatement";
 };
@@ -40,6 +44,13 @@ export type BlockStatement = {
 export type VariableStatement = {
   type: "VariableStatement";
   declarations: ASTNode[];
+};
+
+export type ConditionalStatement = {
+  type: "ConditionalStatement";
+  testCondition: ASTNode;
+  consequent: Statement;
+  alternate?: Statement | null;
 };
 export type Program = {
   type: "Program";
@@ -69,6 +80,8 @@ export type ASTNode =
 export type ExpressionType =
   | "PrimaryExpression"
   | "MulExpression"
-  | "ModExpression";
+  | "ModExpression"
+  | "ComparisonExpression"
+  | "AdditiveExpression";
 
-export type Operator = "ADD_OP" | "MUL_OP" | "MOD_OP";
+export type Operator = "ADD_OP" | "MUL_OP" | "MOD_OP" | "COMPARISON_OP";
