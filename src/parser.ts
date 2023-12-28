@@ -11,6 +11,7 @@ import {
   Operator,
   TokenType,
   VariableStatement,
+  ConditionalStatement,
 } from "./types";
 
 export class Parser {
@@ -20,6 +21,7 @@ export class Parser {
   private lookAhead: Token | null;
   protected assignmentOperators = new Set(["ASSIGNEMENT", "COMPLEXASSIGNMENT"]);
   protected literals = new Set(["NUMBER", "STRING"]);
+  protected binaryMemo = new Map<string, ASTNode>();
   constructor() {
     this.str = "";
     this.tokenizer = null;
@@ -28,6 +30,8 @@ export class Parser {
       ["PrimaryExpression", this.PrimaryExpression],
       ["MulExpression", this.MulExpression],
       ["ModExpression", this.ModExpression],
+      ["AdditiveExpression", this.AdditiveExpression],
+      ["ComparisonExpression", this.ComparisonExpression],
     ]);
   }
 
@@ -42,6 +46,10 @@ export class Parser {
   private ModExpression = this.createBinaryExpressionMethod(
     "PrimaryExpression",
     "MOD_OP"
+  );
+  private ComparisonExpression = this.createBinaryExpressionMethod(
+    "AdditiveExpression",
+    "COMPARISON_OP"
   );
   public Parse(input: string) {
     this.str = input;
@@ -70,6 +78,8 @@ export class Parser {
         return this.BlockStatement();
       case "LET":
         return this.VariableStatement();
+      case "IF":
+        return this.ConditionalStatement();
       default:
         return this.ExpressionStatement();
     }
@@ -100,6 +110,24 @@ export class Parser {
       expression,
     };
   }
+
+  private ConditionalStatement(): ConditionalStatement {
+    this.consume("IF");
+    const testCondition = this.ParenthesizedExpression();
+    const consequent = this.Statement();
+    let alternate =
+      this.lookAhead != null && this.lookAhead.type === "ELSE"
+        ? this.consume("ELSE") && this.Statement()
+        : null;
+
+    return {
+      type: "ConditionalStatement",
+      testCondition,
+      consequent,
+      alternate,
+    };
+  }
+
   private VariableStatement(): VariableStatement {
     this.consume("LET");
     const declarations = this.VariableDeclarationList();
@@ -140,7 +168,7 @@ export class Parser {
   }
 
   private AssignmentExpression(): ASTNode {
-    const left = this.AdditiveExpression();
+    const left = this.ComparisonExpression();
     if (!this.isAssignmentOperator(this.lookAhead!.type)) {
       return left;
     }
@@ -198,14 +226,20 @@ export class Parser {
     op: Operator,
     exprMethod: Function
   ): ASTNode {
+    let binaryKey = `${left.type}${op}${exprMethod.name}`;
+    let binaryMemo = this.binaryMemo;
+    if (binaryMemo.has(binaryKey))
+      return this.binaryMemo.get(binaryKey) as ASTNode;
     const operator = this.consume(op).value;
     const right: ASTNode = exprMethod.call(this);
-    return {
+    const binaryExpression: ASTNode = {
       type: "BinaryExpression",
       operator,
       left,
       right,
     };
+    binaryMemo.set(binaryKey, binaryExpression);
+    return binaryExpression;
   }
   private createBinaryExpressionMethod(
     nextMethod: ExpressionType,
