@@ -854,7 +854,7 @@ let expectations = {
       {
         type: "ConditionalStatement",
         testCondition: {
-          type: "BinaryExpression",
+          type: "LogicalExpression",
           operator: "&&",
           left: {
             type: "BinaryExpression",
@@ -893,7 +893,7 @@ let expectations = {
       {
         type: "ConditionalStatement",
         testCondition: {
-          type: "BinaryExpression",
+          type: "LogicalExpression",
           operator: "||",
           left: {
             type: "BinaryExpression",
