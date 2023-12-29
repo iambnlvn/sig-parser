@@ -75,7 +75,7 @@ export type LiteralType =
 export type ASTNode =
   | { type: LiteralType; value: number | string | boolean | null }
   | {
-      type: "AssignmentExpression" | "BinaryExpression";
+      type: "AssignmentExpression" | "BinaryExpression" | "LogicalExpression";
       operator: string;
       left: ASTNode;
       right: ASTNode;
