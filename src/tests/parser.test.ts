@@ -797,6 +797,135 @@ let expectations = {
       },
     ],
   },
+  ifTrueComparison: {
+    type: "Program",
+    body: [
+      {
+        type: "ConditionalStatement",
+        testCondition: { type: "BooleanLiteral", value: true },
+        consequent: {
+          type: "BlockStatement",
+          body: [
+            {
+              type: "ExpressionStatement",
+              expression: { type: "StringLiteral", value: "Hello" },
+            },
+          ],
+        },
+        alternate: null,
+      },
+    ],
+  },
+  ifElseBoolComparison: {
+    type: "Program",
+    body: [
+      {
+        type: "ConditionalStatement",
+        testCondition: { type: "BooleanLiteral", value: true },
+        consequent: {
+          type: "BlockStatement",
+          body: [
+            {
+              type: "ExpressionStatement",
+              expression: { type: "StringLiteral", value: "Hello" },
+            },
+          ],
+        },
+        alternate: {
+          type: "ConditionalStatement",
+          testCondition: { type: "BooleanLiteral", value: false },
+          consequent: {
+            type: "BlockStatement",
+            body: [
+              {
+                type: "ExpressionStatement",
+                expression: { type: "StringLiteral", value: "yoo" },
+              },
+            ],
+          },
+          alternate: null,
+        },
+      },
+    ],
+  },
+  logicalAndIfElseComparison: {
+    type: "Program",
+    body: [
+      {
+        type: "ConditionalStatement",
+        testCondition: {
+          type: "BinaryExpression",
+          operator: "&&",
+          left: {
+            type: "BinaryExpression",
+            operator: ">=",
+            left: { type: "Identifier", name: "x" },
+            right: { type: "NumericLiteral", value: 50 },
+          },
+          right: {
+            type: "BinaryExpression",
+            operator: "<=",
+            left: {
+              type: "BinaryExpression",
+              operator: ">=",
+              left: { type: "Identifier", name: "x" },
+              right: { type: "NumericLiteral", value: 50 },
+            },
+            right: { type: "NumericLiteral", value: 2 },
+          },
+        },
+        consequent: {
+          type: "BlockStatement",
+          body: [
+            {
+              type: "ExpressionStatement",
+              expression: { type: "StringLiteral", value: "Hello" },
+            },
+          ],
+        },
+        alternate: null,
+      },
+    ],
+  },
+  logicalORIfElseComparison: {
+    type: "Program",
+    body: [
+      {
+        type: "ConditionalStatement",
+        testCondition: {
+          type: "BinaryExpression",
+          operator: "||",
+          left: {
+            type: "BinaryExpression",
+            operator: ">=",
+            left: { type: "Identifier", name: "x" },
+            right: { type: "NumericLiteral", value: 50 },
+          },
+          right: {
+            type: "BinaryExpression",
+            operator: "<=",
+            left: {
+              type: "BinaryExpression",
+              operator: ">=",
+              left: { type: "Identifier", name: "x" },
+              right: { type: "NumericLiteral", value: 50 },
+            },
+            right: { type: "NumericLiteral", value: 2 },
+          },
+        },
+        consequent: {
+          type: "BlockStatement",
+          body: [
+            {
+              type: "ExpressionStatement",
+              expression: { type: "StringLiteral", value: "Hello" },
+            },
+          ],
+        },
+        alternate: null,
+      },
+    ],
+  },
   lessComparisonExpr: {
     type: "Program",
     body: [
@@ -897,7 +1026,6 @@ let expectations = {
       },
     ],
   },
-
   inEqualityComparison: {
     type: "Program",
     body: [
@@ -1246,6 +1374,41 @@ describe("Parser", () => {
         JSON.stringify(expectations.ifIneQualityComparison)
       );
     });
+    test("should parse boolean in if statement correctly", () => {
+      let parsedComparisonExpr = parser.Parse(`if (true) { "Hello"; }`);
+
+      expect(JSON.stringify(parsedComparisonExpr)).toEqual(
+        JSON.stringify(expectations.ifTrueComparison)
+      );
+    });
+    test('should parse boolean in if statement correctly with "else if"', () => {
+      let parsedComparisonExpr = parser.Parse(
+        `if (true) { "Hello"; } else if (false) { "yoo"; }`
+      );
+
+      expect(JSON.stringify(parsedComparisonExpr)).toEqual(
+        JSON.stringify(expectations.ifElseBoolComparison)
+      );
+    });
+    test("should parse logical AND expression in if statement correctly", () => {
+      let parsedComparisonExpr = parser.Parse(
+        `if (x >= 50 && x <= 2) { "Hello"; }`
+      );
+
+      expect(JSON.stringify(parsedComparisonExpr)).toEqual(
+        JSON.stringify(expectations.logicalAndIfElseComparison)
+      );
+    });
+
+    test("shoudl parse logical OR expression in if statement correctly", () => {
+      let parsedComparisonExpr = parser.Parse(
+        `if (x >= 50 || x <= 2) { "Hello"; }`
+      );
+
+      expect(JSON.stringify(parsedComparisonExpr)).toEqual(
+        JSON.stringify(expectations.logicalORIfElseComparison)
+      );
+    });
   });
   describe("Comparison Expression", () => {
     test("should parse < comparison expression correctly", () => {
@@ -1276,14 +1439,14 @@ describe("Parser", () => {
         JSON.stringify(expectations.greateEqComparisonExpr)
       );
     });
-    test("should parse equality comparison expression correctly", () => {
+    test("should parse == equality comparison expression correctly", () => {
       let parsedComparisonExpr = parser.Parse(`x == 50;`);
 
       expect(JSON.stringify(parsedComparisonExpr)).toEqual(
         JSON.stringify(expectations.equalityComparison)
       );
     });
-    test("should parse inequality comparison expression correctly", () => {
+    test("should parse != inequality comparison expression correctly", () => {
       let parsedComparisonExpr = parser.Parse(`x != 50;`);
 
       expect(JSON.stringify(parsedComparisonExpr)).toEqual(
