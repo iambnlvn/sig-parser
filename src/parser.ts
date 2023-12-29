@@ -272,14 +272,14 @@ export class Parser {
       return this.binaryMemo.get(binaryKey) as ASTNode;
     const operator = this.consume(op).value;
     const right: ASTNode = exprMethod.call(this);
-    const binaryExpression: ASTNode = {
-      type: "BinaryExpression",
+    const expression: ASTNode = {
+      type,
       operator,
       left,
       right,
     };
-    binaryMemo.set(binaryKey, binaryExpression);
-    return binaryExpression;
+    binaryMemo.set(binaryKey, expression);
+    return expression;
   }
   private createExpressionMethod(
     nextMethod: ExpressionType,
