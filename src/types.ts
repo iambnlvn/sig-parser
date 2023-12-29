@@ -12,6 +12,12 @@ export type TokenType =
   | "MUL_OP"
   | "MOD_OP"
   | "COMPARISON_OP"
+  | "EQUALITY_OP"
+  | "AND_OP"
+  | "OR_OP"
+  | "TRUE"
+  | "FALSE"
+  | "NILL"
   | "ASSIGNEMENT"
   | "COMPLEXASSIGNMENT"
   | "COMMA"
@@ -60,9 +66,14 @@ export type AST = {
   type: string;
   body: { type: string; expression?: ASTNode }[];
 };
+
+export type LiteralType =
+  | "NumericLiteral"
+  | "StringLiteral"
+  | "BooleanLiteral"
+  | "NillLiteral";
 export type ASTNode =
-  | { type: "NumericLiteral"; value: number }
-  | { type: "StringLiteral"; value: string }
+  | { type: LiteralType; value: number | string | boolean | null }
   | {
       type: "AssignmentExpression" | "BinaryExpression";
       operator: string;
@@ -82,6 +93,17 @@ export type ExpressionType =
   | "MulExpression"
   | "ModExpression"
   | "ComparisonExpression"
-  | "AdditiveExpression";
+  | "AdditiveExpression"
+  | "EqualityExpression"
+  | "LogicalAndExpression"
+  | "LogicalOrExpression";
 
-export type Operator = "ADD_OP" | "MUL_OP" | "MOD_OP" | "COMPARISON_OP";
+export type Operator =
+  | "ADD_OP"
+  | "MUL_OP"
+  | "MOD_OP"
+  | "COMPARISON_OP"
+  | "EQUALITY_OP"
+  | "AND_OP"
+  | "OR_OP";
+export type TokenLiterals = "NUMBER" | "STRING" | "TRUE" | "FALSE" | "NILL";
