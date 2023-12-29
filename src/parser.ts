@@ -12,6 +12,8 @@ import {
   TokenType,
   VariableStatement,
   ConditionalStatement,
+  TokenLiterals,
+  LiteralType,
 } from "./types";
 
 export class Parser {
@@ -20,8 +22,15 @@ export class Parser {
   protected ExpressionMethods: Map<ExpressionType, Function>;
   private lookAhead: Token | null;
   protected assignmentOperators = new Set(["ASSIGNEMENT", "COMPLEXASSIGNMENT"]);
-  protected literals = new Set(["NUMBER", "STRING"]);
+  protected literals = new Set(["NUMBER", "STRING", "TRUE", "FALSE", "NILL"]);
   protected binaryMemo = new Map<string, ASTNode>();
+  protected tokenTypeToLiteralType: Record<TokenLiterals, LiteralType> = {
+    NUMBER: "NumericLiteral",
+    STRING: "StringLiteral",
+    TRUE: "BooleanLiteral",
+    FALSE: "BooleanLiteral",
+    NILL: "NillLiteral",
+  };
   constructor() {
     this.str = "";
     this.tokenizer = null;
@@ -32,25 +41,51 @@ export class Parser {
       ["ModExpression", this.ModExpression],
       ["AdditiveExpression", this.AdditiveExpression],
       ["ComparisonExpression", this.ComparisonExpression],
+      ["EqualityExpression", this.EqualityExpression],
+      ["LogicalAndExpression", this.LogicalAndExpression],
+      ["LogicalOrExpression", this.LogicalOrExpression],
     ]);
   }
 
-  private AdditiveExpression = this.createBinaryExpressionMethod(
+  private AdditiveExpression = this.createExpressionMethod(
     "MulExpression",
-    "ADD_OP"
+    "ADD_OP",
+    "BinaryExpression"
   );
-  private MulExpression = this.createBinaryExpressionMethod(
+  private MulExpression = this.createExpressionMethod(
     "ModExpression",
-    "MUL_OP"
+    "MUL_OP",
+    "BinaryExpression"
   );
-  private ModExpression = this.createBinaryExpressionMethod(
+  private ModExpression = this.createExpressionMethod(
     "PrimaryExpression",
-    "MOD_OP"
+    "MOD_OP",
+    "BinaryExpression"
   );
-  private ComparisonExpression = this.createBinaryExpressionMethod(
+  private ComparisonExpression = this.createExpressionMethod(
     "AdditiveExpression",
-    "COMPARISON_OP"
+    "COMPARISON_OP",
+    "BinaryExpression"
   );
+
+  private EqualityExpression = this.createExpressionMethod(
+    "ComparisonExpression",
+    "EQUALITY_OP",
+    "BinaryExpression"
+  );
+
+  private LogicalAndExpression = this.createExpressionMethod(
+    "EqualityExpression",
+    "AND_OP",
+    "LogicalExpression"
+  );
+
+  private LogicalOrExpression = this.createExpressionMethod(
+    "LogicalAndExpression",
+    "OR_OP",
+    "LogicalExpression"
+  );
+
   public Parse(input: string) {
     this.str = input;
     if (!this.tokenizer) this.tokenizer = new Tokenizer();
@@ -168,7 +203,7 @@ export class Parser {
   }
 
   private AssignmentExpression(): ASTNode {
-    const left = this.ComparisonExpression();
+    const left = this.LogicalOrExpression();
     if (!this.isAssignmentOperator(this.lookAhead!.type)) {
       return left;
     }
@@ -210,21 +245,26 @@ export class Parser {
     };
   }
 
-  protected BinaryExpression(expType: ExpressionType, op: Operator): ASTNode {
+  protected MainExpression(
+    expType: ExpressionType,
+    op: Operator,
+    type: "BinaryExpression" | "LogicalExpression"
+  ): ASTNode {
     const exprMethod = this.ExpressionMethods.get(expType);
     if (!exprMethod)
       throw new SyntaxError(`Unexpected expression type: "${expType}"`);
     let left: ASTNode = exprMethod.call(this);
     while (this.lookAhead?.type === op) {
-      left = this.createBinaryExpression(left, op, exprMethod);
+      left = this.createMainExpression(left, op, exprMethod, type);
     }
     return left;
   }
 
-  private createBinaryExpression(
+  private createMainExpression(
     left: ASTNode,
     op: Operator,
-    exprMethod: Function
+    exprMethod: Function,
+    type: "BinaryExpression" | "LogicalExpression"
   ): ASTNode {
     let binaryKey = `${left.type}${op}${exprMethod.name}`;
     let binaryMemo = this.binaryMemo;
@@ -241,11 +281,12 @@ export class Parser {
     binaryMemo.set(binaryKey, binaryExpression);
     return binaryExpression;
   }
-  private createBinaryExpressionMethod(
+  private createExpressionMethod(
     nextMethod: ExpressionType,
-    op: Operator
+    op: Operator,
+    type: "BinaryExpression" | "LogicalExpression"
   ): () => ASTNode {
-    return () => this.BinaryExpression(nextMethod, op);
+    return () => this.MainExpression(nextMethod, op, type);
   }
   private PrimaryExpression(): ASTNode {
     if (this.isLiteral(this.lookAhead!.type)) return this.Literal();
@@ -283,37 +324,60 @@ export class Parser {
 
   private Literal(): ASTNode {
     if (!this.lookAhead) throw new SyntaxError("Unexpected end of input");
-    switch (this.lookAhead.type) {
-      case "NUMBER":
-        return this.CreateLiteral("NumericLiteral");
-      case "STRING":
-        return this.CreateLiteral("StringLiteral");
-    }
-    throw new SyntaxError(`Unexpected token type: "${this.lookAhead.type}"`);
+    let lookAheadType = this.lookAhead.type as TokenLiterals;
+    const literalType: LiteralType = this.tokenTypeToLiteralType[lookAheadType];
+    if (!literalType)
+      throw new SyntaxError(`Unexpected token: "${this.lookAhead.value}"`);
+    const value =
+      lookAheadType === "TRUE"
+        ? true
+        : lookAheadType === "FALSE"
+        ? false
+        : null;
+
+    return this.CreateLiteral(literalType, value);
   }
   private isLiteral(tokenType: TokenType): boolean {
     return this.literals.has(tokenType);
   }
 
   private CreateLiteral(
-    literalType: "StringLiteral" | "NumericLiteral"
+    literalType: LiteralType,
+    value?: boolean | null
   ): ASTNode {
     let token: Token;
-    if (literalType === "StringLiteral") {
-      token = this.consume("STRING");
-      return {
-        type: "StringLiteral",
-        value:
-          typeof token.value === "string"
-            ? token.value.slice(1, -1)
-            : String(token.value),
-      };
-    } else {
-      token = this.consume("NUMBER");
-      return {
-        type: "NumericLiteral",
-        value: Number(Number(token.value)),
-      };
+    switch (literalType) {
+      case "StringLiteral": {
+        token = this.consume("STRING");
+        return {
+          type: "StringLiteral",
+          value:
+            typeof token.value === "string"
+              ? token.value.slice(1, -1)
+              : String(token.value),
+        };
+      }
+      case "NumericLiteral": {
+        token = this.consume("NUMBER");
+        return {
+          type: "NumericLiteral",
+          value: Number(Number(token.value)),
+        };
+      }
+      case "BooleanLiteral": {
+        if (value == null) throw new TypeError("missing Boolean literal value");
+        token = this.consume(String(value).toUpperCase() as TokenType);
+        return {
+          type: "BooleanLiteral",
+          value: value,
+        };
+      }
+      case "NillLiteral":
+        token = this.consume("NILL");
+        return {
+          type: "NillLiteral",
+          value: null,
+        };
     }
   }
 }
