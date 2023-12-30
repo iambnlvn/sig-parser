@@ -335,6 +335,78 @@ let expectations = {
       },
     ],
   },
+  negUnaryExpr: {
+    type: "Program",
+    body: [
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "UnaryExpression",
+          operator: "-",
+          argument: {
+            type: "NumericLiteral",
+            value: 11,
+          },
+        },
+      },
+    ],
+  },
+  notUnaryExpr: {
+    type: "Program",
+    body: [
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "UnaryExpression",
+          operator: "!",
+          argument: {
+            type: "BooleanLiteral",
+            value: true,
+          },
+        },
+      },
+    ],
+  },
+  doubleNegUnaryExpr: {
+    type: "Program",
+    body: [
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "UnaryExpression",
+          operator: "-",
+          argument: {
+            type: "UnaryExpression",
+            operator: "-",
+            argument: {
+              type: "NumericLiteral",
+              value: 11,
+            },
+          },
+        },
+      },
+    ],
+  },
+  doublePosUnaryExpr: {
+    type: "Program",
+    body: [
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "UnaryExpression",
+          operator: "+",
+          argument: {
+            type: "UnaryExpression",
+            operator: "+",
+            argument: {
+              type: "NumericLiteral",
+              value: 11,
+            },
+          },
+        },
+      },
+    ],
+  },
   asignmentExpr: {
     type: "Program",
     body: [
@@ -1285,6 +1357,38 @@ describe("Parser", () => {
       );
     });
   });
+
+  describe("UnaryExpression", () => {
+    test("should parse unary expression correctly", () => {
+      let parsedUnaryExpr = parser.Parse(`-11;`);
+
+      expect(JSON.stringify(parsedUnaryExpr)).toEqual(
+        JSON.stringify(expectations.negUnaryExpr)
+      );
+    });
+    test('should parse "not" unary expression correctly', () => {
+      let parsedUnaryExpr = parser.Parse(`!true;`);
+
+      expect(JSON.stringify(parsedUnaryExpr)).toEqual(
+        JSON.stringify(expectations.notUnaryExpr)
+      );
+      test("should parse -- unary expression correctly", () => {
+        let parsedUnaryExpr = parser.Parse(`--11;`);
+
+        expect(JSON.stringify(parsedUnaryExpr)).toEqual(
+          JSON.stringify(expectations.doubleNegUnaryExpr)
+        );
+      });
+    });
+    test('should parse "++" unary expression correctly', () => {
+      let parsedUnaryExpr = parser.Parse(`++11;`);
+
+      expect(JSON.stringify(parsedUnaryExpr)).toEqual(
+        JSON.stringify(expectations.doublePosUnaryExpr)
+      );
+    });
+  });
+
   describe("Variable declaration", () => {
     test("should parse variable declaration correctly", () => {
       let parsedVarDecl = parser.Parse(`let x = 11;`);

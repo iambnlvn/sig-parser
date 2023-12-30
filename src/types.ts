@@ -16,6 +16,7 @@ export type TokenType =
   | "AND_OP"
   | "OR_OP"
   | "TRUE"
+  | "NOT_OP"
   | "FALSE"
   | "NILL"
   | "ASSIGNEMENT"
@@ -80,6 +81,11 @@ export type ASTNode =
       left: ASTNode;
       right: ASTNode;
     }
+  | {
+      type: "UnaryExpression";
+      operator: string;
+      argument: ASTNode;
+    }
   | { type: "EmptyStatement" }
   | { type: "Identifier"; name: string }
   | {
@@ -96,7 +102,8 @@ export type ExpressionType =
   | "AdditiveExpression"
   | "EqualityExpression"
   | "LogicalAndExpression"
-  | "LogicalOrExpression";
+  | "LogicalOrExpression"
+  | "UnaryExpression";
 
 export type Operator =
   | "ADD_OP"
@@ -105,5 +112,6 @@ export type Operator =
   | "COMPARISON_OP"
   | "EQUALITY_OP"
   | "AND_OP"
-  | "OR_OP";
+  | "OR_OP"
+  | "NOT_OP";
 export type TokenLiterals = "NUMBER" | "STRING" | "TRUE" | "FALSE" | "NILL";

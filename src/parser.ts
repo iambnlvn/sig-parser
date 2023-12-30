@@ -44,6 +44,7 @@ export class Parser {
       ["EqualityExpression", this.EqualityExpression],
       ["LogicalAndExpression", this.LogicalAndExpression],
       ["LogicalOrExpression", this.LogicalOrExpression],
+      ["UnaryExpression", this.UnaryExpression],
     ]);
   }
 
@@ -58,7 +59,7 @@ export class Parser {
     "BinaryExpression"
   );
   private ModExpression = this.createExpressionMethod(
-    "PrimaryExpression",
+    "UnaryExpression",
     "MOD_OP",
     "BinaryExpression"
   );
@@ -86,9 +87,21 @@ export class Parser {
     "LogicalExpression"
   );
 
+  private UnaryExpression(): ASTNode {
+    if (["ADD_OP", "NOT_OP"].includes(this.lookAhead!.type)) {
+      return {
+        type: "UnaryExpression",
+        operator: this.consume(this.lookAhead!.type).value,
+        argument: this.UnaryExpression(),
+      };
+    }
+
+    return this.LeftHandSideExpression();
+  }
   public Parse(input: string) {
+    if (!input) throw new SyntaxError("Empty input");
     this.str = input;
-    if (!this.tokenizer) this.tokenizer = new Tokenizer();
+    this.tokenizer ||= new Tokenizer();
     this.tokenizer.init(this.str);
     this.lookAhead = this.tokenizer.getNextToken();
     return this.Program();
@@ -216,7 +229,8 @@ export class Parser {
   }
 
   private checkValidAssignmentTarget(node: ASTNode): ASTNode {
-    if (node.type === "Identifier") return node;
+    if (node.type === "Identifier" || node.type === "UnaryExpression")
+      return node;
     throw new SyntaxError(`Invalid left-hand side in assignment expression`);
   }
 
@@ -235,7 +249,7 @@ export class Parser {
     return this.assignmentOperators.has(tokenType);
   }
   private LeftHandSideExpression(): ASTNode {
-    return this.Identifier();
+    return this.PrimaryExpression();
   }
 
   private Identifier(): ASTNode {
@@ -294,6 +308,8 @@ export class Parser {
     switch (this.lookAhead?.type) {
       case "LPAREN":
         return this.ParenthesizedExpression();
+      case "IDENTIFIER":
+        return this.Identifier();
       default:
         return this.LeftHandSideExpression();
     }
