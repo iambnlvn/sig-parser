@@ -27,6 +27,7 @@ const LangSpec: [RegExp, TokenType | null][] = [
   [/^&&/, "AND_OP"],
   [/^\|\|/, "OR_OP"],
   [/^[<>]=?/, "COMPARISON_OP"],
+  [/^!/, "NOT_OP"],
   [/^,/, "COMMA"],
   [/^"/, null],
   [/^[a-zA-Z_]\w*/, "IDENTIFIER"],
