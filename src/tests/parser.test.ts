@@ -1118,6 +1118,145 @@ let expectations = {
       },
     ],
   },
+  whileStatement: {
+    type: "Program",
+    body: [
+      {
+        type: "WhileStatement",
+        iterationCondition: {
+          type: "AssignmentExpression",
+          operator: "=",
+          left: { type: "Identifier", name: "x" },
+          right: { type: "NumericLiteral", value: 1 },
+        },
+        body: {
+          type: "BlockStatement",
+          body: [
+            {
+              type: "ExpressionStatement",
+              expression: { type: "StringLiteral", value: "hello" },
+            },
+          ],
+        },
+      },
+    ],
+  },
+  doWhileStatement: {
+    type: "Program",
+    body: [
+      {
+        type: "DoWhileStatement",
+        iterationCondition: {
+          type: "AssignmentExpression",
+          operator: "=",
+          left: { type: "Identifier", name: "x" },
+          right: { type: "NumericLiteral", value: 1 },
+        },
+        body: {
+          type: "BlockStatement",
+          body: [
+            {
+              type: "ExpressionStatement",
+              expression: { type: "StringLiteral", value: "hello" },
+            },
+          ],
+        },
+      },
+    ],
+  },
+  forStatement: {
+    type: "Program",
+    body: [
+      {
+        type: "ForStatement",
+        init: {
+          type: "VariableDeclaration",
+          variableName: { type: "Identifier", name: "i" },
+          variableInitialValue: { type: "NumericLiteral", value: 0 },
+        },
+        testCondition: {
+          type: "BinaryExpression",
+          operator: "<",
+          left: { type: "Identifier", name: "i" },
+          right: { type: "NumericLiteral", value: 10 },
+        },
+        update: {
+          type: "AssignmentExpression",
+          operator: "=",
+          left: { type: "Identifier", name: "i" },
+          right: {
+            type: "BinaryExpression",
+            operator: "+",
+            left: { type: "Identifier", name: "i" },
+            right: { type: "NumericLiteral", value: 1 },
+          },
+        },
+        body: {
+          type: "BlockStatement",
+          body: [
+            {
+              type: "ExpressionStatement",
+              expression: {
+                type: "AssignmentExpression",
+                operator: "=",
+                left: { type: "Identifier", name: "i" },
+                right: {
+                  type: "BinaryExpression",
+                  operator: "+",
+                  left: {
+                    type: "BinaryExpression",
+                    operator: "+",
+                    left: { type: "Identifier", name: "i" },
+                    right: { type: "NumericLiteral", value: 1 },
+                  },
+                  right: { type: "NumericLiteral", value: 1 },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+  infiniteForStatement: {
+    type: "Program",
+    body: [
+      {
+        type: "ForStatement",
+        init: null,
+        testCondition: null,
+        update: null,
+        body: {
+          type: "BlockStatement",
+          body: [
+            {
+              type: "ExpressionStatement",
+              expression: {
+                type: "AssignmentExpression",
+                operator: "=",
+                left: {
+                  type: "Identifier",
+                  name: "i",
+                },
+                right: {
+                  type: "BinaryExpression",
+                  operator: "+",
+                  left: {
+                    type: "Identifier",
+                    name: "i",
+                  },
+                  right: {
+                    type: "NumericLiteral",
+                    value: 1,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
 };
 
 describe("Parser", () => {
@@ -1555,6 +1694,40 @@ describe("Parser", () => {
 
       expect(JSON.stringify(parsedComparisonExpr)).toEqual(
         JSON.stringify(expectations.inEqualityComparison)
+      );
+    });
+  });
+  describe("Iteration statement", () => {
+    test("should parse while statement correctly", () => {
+      let parsedWhileStatement = parser.Parse(`while (x=1) { "hello" ;}`);
+
+      expect(JSON.stringify(parsedWhileStatement)).toEqual(
+        JSON.stringify(expectations.whileStatement)
+      );
+    });
+    test("should parse do while statement correctly", () => {
+      let parsedDoWhileStatement = parser.Parse(`do { "hello" ;} while (x=1);`);
+
+      expect(JSON.stringify(parsedDoWhileStatement)).toEqual(
+        JSON.stringify(expectations.doWhileStatement)
+      );
+    });
+    test("should parse for statement correctly", () => {
+      let parsedForStatement = parser.Parse(
+        `for(let i = 0; i < 10; i = i + 1) { 
+  i=i+1;
+ }`
+      );
+
+      expect(JSON.stringify(parsedForStatement)).toEqual(
+        JSON.stringify(expectations.forStatement)
+      );
+    });
+    test("should parse inifinite for statement correctly", () => {
+      let parsedForStatement = parser.Parse(`for(;;) {i=i+1;}`);
+
+      expect(JSON.stringify(parsedForStatement)).toEqual(
+        JSON.stringify(expectations.infiniteForStatement)
       );
     });
   });

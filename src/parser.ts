@@ -14,6 +14,7 @@ import {
   ConditionalStatement,
   TokenLiterals,
   LiteralType,
+  IterationStatement,
 } from "./types";
 
 export class Parser {
@@ -128,6 +129,10 @@ export class Parser {
         return this.VariableStatement();
       case "IF":
         return this.ConditionalStatement();
+      case "WHILE":
+      case "DO":
+      case "FOR":
+        return this.IterationStatement();
       default:
         return this.ExpressionStatement();
     }
@@ -175,7 +180,61 @@ export class Parser {
       alternate,
     };
   }
+  private IterationStatement(): IterationStatement {
+    switch (this.lookAhead?.type) {
+      case "WHILE":
+        return this.WhileStatement();
+      case "DO":
+        return this.WhileStatement(true);
+      case "FOR":
+        return this.ForStatement();
+    }
+    throw new SyntaxError("Unexpected token");
+  }
 
+  private WhileStatement(DoWhileFlag: boolean = false): IterationStatement {
+    let body: Statement;
+    if (DoWhileFlag) {
+      this.consume("DO");
+      body = this.Statement();
+    }
+    this.consume("WHILE");
+    const iterationCondition = this.ParenthesizedExpression();
+    body ??= this.Statement();
+    DoWhileFlag && this.consume("SEMICOLON");
+    return {
+      type: DoWhileFlag ? "DoWhileStatement" : "WhileStatement",
+      iterationCondition,
+      body,
+    };
+  }
+  private ForStatement(): IterationStatement {
+    this.consume("FOR");
+    this.consume("LPAREN");
+
+    let init =
+      this.lookAhead?.type !== "SEMICOLON"
+        ? this.consume("LET") && this.VariableDeclaration()
+        : null;
+    this.consume("SEMICOLON");
+
+    let testCondition =
+      this.lookAhead?.type !== "SEMICOLON" ? this.Expression() : null;
+    this.consume("SEMICOLON");
+
+    let update = this.lookAhead?.type !== "RPAREN" ? this.Expression() : null;
+    this.consume("RPAREN");
+
+    const body = this.Statement();
+
+    return {
+      type: "ForStatement",
+      init,
+      testCondition,
+      update,
+      body,
+    };
+  }
   private VariableStatement(): VariableStatement {
     this.consume("LET");
     const declarations = this.VariableDeclarationList();

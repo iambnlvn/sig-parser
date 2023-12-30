@@ -24,7 +24,10 @@ export type TokenType =
   | "COMMA"
   | "LET"
   | "IF"
-  | "ELSE";
+  | "ELSE"
+  | "WHILE"
+  | "DO"
+  | "FOR";
 export type Token = {
   type: TokenType;
   value: string;
@@ -35,7 +38,8 @@ export type Statement =
   | BlockStatement
   | EmptyStatement
   | VariableStatement
-  | ConditionalStatement;
+  | ConditionalStatement
+  | IterationStatement;
 export type EmptyStatement = {
   type: "EmptyStatement";
 };
@@ -59,6 +63,19 @@ export type ConditionalStatement = {
   consequent: Statement;
   alternate?: Statement | null;
 };
+export type IterationStatement =
+  | {
+      type: "WhileStatement" | "DoWhileStatement";
+      iterationCondition: ASTNode;
+      body: Statement;
+    }
+  | {
+      type: "ForStatement";
+      init?: ASTNode | null;
+      testCondition?: ASTNode | null;
+      update?: ASTNode | null;
+      body: Statement;
+    };
 export type Program = {
   type: "Program";
   body: Statement[];
