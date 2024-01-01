@@ -320,6 +320,76 @@ export class Parser {
     return this.AssignmentExpression();
   }
 
+  private MemberExpression(): ASTNode {
+    let object = this.PrimaryExpression();
+    while (["DOT", "LSBRACKET"].includes(this.lookAhead!.type)) {
+      const computed = this.lookAhead!.type === "LSBRACKET";
+      const property = this.getProperty(computed);
+      object = this.createMemberExpression(object, property, computed);
+    }
+    return object;
+  }
+
+  private getProperty(computedFlag: boolean): ASTNode {
+    if (computedFlag) {
+      this.consume("LSBRACKET");
+      const property = this.Expression();
+      this.consume("RSBRACKET");
+      return property;
+    } else {
+      this.consume("DOT");
+      return this.Identifier();
+    }
+  }
+
+  private createMemberExpression(
+    object: ASTNode,
+    property: ASTNode,
+    computed: boolean
+  ): ASTNode {
+    return {
+      type: "MemberExpression",
+      computed,
+      object,
+      property,
+    };
+  }
+
+  private CallMemberExpression(): ASTNode {
+    const member = this.MemberExpression();
+    if (this.lookAhead?.type === "LPAREN") {
+      return this.CallExpresion(member);
+    }
+    return member;
+  }
+
+  private CallExpresion(callee: ASTNode): ASTNode {
+    let callExpression: ASTNode = {
+      type: "CallExpression",
+      callee,
+      arguments: this.Arguments(),
+    };
+
+    return this.lookAhead?.type === "LPAREN"
+      ? this.CallExpresion(callExpression)
+      : callExpression;
+  }
+  private Arguments(): ASTNode[] {
+    this.consume("LPAREN");
+    const argumentList =
+      this.lookAhead?.type !== "RPAREN" ? this.ArgumentList() : [];
+    this.consume("RPAREN");
+    return argumentList;
+  }
+
+  private ArgumentList(): ASTNode[] {
+    let argumentList: ASTNode[] = [];
+    do {
+      argumentList.push(this.AssignmentExpression());
+    } while (this.lookAhead?.type === "COMMA" && this.consume("COMMA"));
+    return argumentList;
+  }
+
   private AssignmentExpression(): ASTNode {
     const left = this.LogicalOrExpression();
 
@@ -335,8 +405,7 @@ export class Parser {
   }
 
   private checkValidAssignmentTarget(node: ASTNode): ASTNode {
-    if (node.type === "Identifier" || node.type === "UnaryExpression")
-      return node;
+    if (["Identifier", "MemberExpression"].includes(node.type)) return node;
     throw new SyntaxError(`Invalid left-hand side in assignment expression`);
   }
 
@@ -356,7 +425,7 @@ export class Parser {
   }
 
   private LeftHandSideExpression(): ASTNode {
-    return this.PrimaryExpression();
+    return this.CallMemberExpression();
   }
 
   private Identifier(): ASTNode {
