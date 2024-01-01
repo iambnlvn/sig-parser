@@ -1473,6 +1473,302 @@ const functionCategory = [
   },
 ];
 
+const MemberCategory = [
+  {
+    testName: "should parse Member Expression with dot notation",
+    input: "obj.property;",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ExpressionStatement",
+          expression: {
+            type: "MemberExpression",
+            computed: false,
+            object: {
+              type: "Identifier",
+              name: "obj",
+            },
+            property: {
+              type: "Identifier",
+              name: "property",
+            },
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse Member Expression with bracket notation",
+    input: "obj['property'];",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ExpressionStatement",
+          expression: {
+            type: "MemberExpression",
+            computed: true,
+            object: {
+              type: "Identifier",
+              name: "obj",
+            },
+            property: {
+              type: "StringLiteral",
+              value: "property",
+            },
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName:
+      "should parse Member Expression with bracket notation and expression",
+    input: "obj['property' + 1];",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ExpressionStatement",
+          expression: {
+            type: "MemberExpression",
+            computed: true,
+            object: {
+              type: "Identifier",
+              name: "obj",
+            },
+            property: {
+              type: "BinaryExpression",
+              operator: "+",
+              left: {
+                type: "StringLiteral",
+                value: "property",
+              },
+              right: {
+                type: "NumericLiteral",
+                value: 1,
+              },
+            },
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse Member Expression with bracket and dot notation",
+    input: "obj['property'].property;",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ExpressionStatement",
+          expression: {
+            type: "MemberExpression",
+            computed: false,
+            object: {
+              type: "MemberExpression",
+              computed: true,
+              object: {
+                type: "Identifier",
+                name: "obj",
+              },
+              property: {
+                type: "StringLiteral",
+                value: "property",
+              },
+            },
+            property: {
+              type: "Identifier",
+              name: "property",
+            },
+          },
+        },
+      ],
+    },
+  },
+];
+const callCategory = [
+  {
+    testName: "should parse call expression with no arguments",
+    input: "hello();",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ExpressionStatement",
+          expression: {
+            type: "CallExpression",
+            callee: {
+              type: "Identifier",
+              name: "hello",
+            },
+            arguments: [],
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse call expression with one argument",
+    input: "hello(1);",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ExpressionStatement",
+          expression: {
+            type: "CallExpression",
+            callee: {
+              type: "Identifier",
+              name: "hello",
+            },
+            arguments: [
+              {
+                type: "NumericLiteral",
+                value: 1,
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse call expression with multiple arguments",
+    input: "hello(1, 'world');",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ExpressionStatement",
+          expression: {
+            type: "CallExpression",
+            callee: {
+              type: "Identifier",
+              name: "hello",
+            },
+            arguments: [
+              {
+                type: "NumericLiteral",
+                value: 1,
+              },
+              {
+                type: "StringLiteral",
+                value: "world",
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse call expression with member expression",
+    input: "obj.hello();",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ExpressionStatement",
+          expression: {
+            type: "CallExpression",
+            callee: {
+              type: "MemberExpression",
+              computed: false,
+              object: {
+                type: "Identifier",
+                name: "obj",
+              },
+              property: {
+                type: "Identifier",
+                name: "hello",
+              },
+            },
+            arguments: [],
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName:
+      "should parse call expression with a member expression as argument",
+    input: "user.sayHello(obj.name);",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ExpressionStatement",
+          expression: {
+            type: "CallExpression",
+            callee: {
+              type: "MemberExpression",
+              computed: false,
+              object: {
+                type: "Identifier",
+                name: "user",
+              },
+              property: {
+                type: "Identifier",
+                name: "sayHello",
+              },
+            },
+            arguments: [
+              {
+                type: "MemberExpression",
+                computed: false,
+                object: {
+                  type: "Identifier",
+                  name: "obj",
+                },
+                property: {
+                  type: "Identifier",
+                  name: "name",
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse expressioncall with currying",
+    input: "hello(1)(2);",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ExpressionStatement",
+          expression: {
+            type: "CallExpression",
+            callee: {
+              type: "CallExpression",
+              callee: {
+                type: "Identifier",
+                name: "hello",
+              },
+              arguments: [
+                {
+                  type: "NumericLiteral",
+                  value: 1,
+                },
+              ],
+            },
+            arguments: [
+              {
+                type: "NumericLiteral",
+                value: 2,
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+];
+
 describe("Parser", () => {
   let parser: Parser;
   let getExpr = (ast: AST, opt: "value" | "type") => {
@@ -1656,6 +1952,29 @@ describe("Parser", () => {
         let parsedFunctionDeclaration = parser.Parse(testCase.input);
 
         expect(JSON.stringify(parsedFunctionDeclaration)).toEqual(
+          JSON.stringify(testCase.expected)
+        );
+      });
+    });
+  });
+
+  describe("Member Expression", () => {
+    MemberCategory.map((testCase) => {
+      test(testCase.testName, () => {
+        let parsedMemberExpression = parser.Parse(testCase.input);
+
+        expect(JSON.stringify(parsedMemberExpression)).toEqual(
+          JSON.stringify(testCase.expected)
+        );
+      });
+    });
+  });
+  describe("Call Expression", () => {
+    callCategory.map((testCase) => {
+      test(testCase.testName, () => {
+        let parsedCallExpression = parser.Parse(testCase.input);
+
+        expect(JSON.stringify(parsedCallExpression)).toEqual(
           JSON.stringify(testCase.expected)
         );
       });

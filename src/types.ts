@@ -29,7 +29,10 @@ export type TokenType =
   | "DO"
   | "FOR"
   | "FUNCTION"
-  | "RETURN";
+  | "RETURN"
+  | "LSBRACKET"
+  | "RSBRACKET"
+  | "DOT";
 
 export type Token = {
   type: TokenType;
@@ -126,6 +129,17 @@ export type ASTNode =
       type: "VariableDeclaration";
       variableName: ASTNode;
       variableInitialValue?: ASTNode | null;
+    }
+  | {
+      type: "CallExpression";
+      callee: ASTNode;
+      arguments: ASTNode[];
+    }
+  | {
+      type: "MemberExpression";
+      computed: boolean;
+      object: ASTNode;
+      property: ASTNode;
     };
 
 export type ExpressionType =
@@ -137,7 +151,9 @@ export type ExpressionType =
   | "EqualityExpression"
   | "LogicalAndExpression"
   | "LogicalOrExpression"
-  | "UnaryExpression";
+  | "UnaryExpression"
+  | "MemberExpression"
+  | "CallExpression";
 
 export type Operator =
   | "ADD_OP"
