@@ -27,7 +27,10 @@ export type TokenType =
   | "ELSE"
   | "WHILE"
   | "DO"
-  | "FOR";
+  | "FOR"
+  | "FUNCTION"
+  | "RETURN";
+
 export type Token = {
   type: TokenType;
   value: string;
@@ -39,7 +42,9 @@ export type Statement =
   | EmptyStatement
   | VariableStatement
   | ConditionalStatement
-  | IterationStatement;
+  | IterationStatement
+  | FunctionDeclaration
+  | FunctionReturn;
 export type EmptyStatement = {
   type: "EmptyStatement";
 };
@@ -76,6 +81,18 @@ export type IterationStatement =
       update?: ASTNode | null;
       body: Statement;
     };
+
+export type FunctionDeclaration = {
+  type: "FunctionDeclaration";
+  name: ASTNode;
+  params?: ASTNode[];
+  body: Statement;
+};
+
+export type FunctionReturn = {
+  type: "ReturnStatement";
+  argument?: ASTNode | null;
+};
 export type Program = {
   type: "Program";
   body: Statement[];

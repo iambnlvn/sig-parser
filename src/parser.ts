@@ -15,6 +15,8 @@ import {
   TokenLiterals,
   LiteralType,
   IterationStatement,
+  FunctionDeclaration,
+  FunctionReturn,
 } from "./types";
 
 export class Parser {
@@ -133,6 +135,10 @@ export class Parser {
       case "DO":
       case "FOR":
         return this.IterationStatement();
+      case "FUNCTION":
+        return this.FunctionDeclaration();
+      case "RETURN":
+        return this.FunctionReturn();
       default:
         return this.ExpressionStatement();
     }
@@ -235,6 +241,43 @@ export class Parser {
       body,
     };
   }
+
+  private FunctionDeclaration(): FunctionDeclaration {
+    this.consume("FUNCTION");
+    let name = this.Identifier();
+    this.consume("LPAREN");
+    let params =
+      this.lookAhead?.type !== "RPAREN" ? this.FunctionParamsList() : [];
+
+    this.consume("RPAREN");
+    const body = this.BlockStatement();
+    return {
+      type: "FunctionDeclaration",
+      name,
+      params,
+      body,
+    };
+  }
+
+  private FunctionParamsList(): ASTNode[] {
+    const params = [];
+    do {
+      params.push(this.Identifier());
+    } while (this.lookAhead?.type === "COMMA" && this.consume("COMMA"));
+
+    return params;
+  }
+  //TODO: implement a function return
+  private FunctionReturn(): FunctionReturn {
+    this.consume("RETURN");
+    const argument =
+      this.lookAhead?.type !== "SEMICOLON" ? this.Expression() : null;
+    this.consume("SEMICOLON");
+    return {
+      type: "ReturnStatement",
+      argument,
+    };
+  }
   private VariableStatement(): VariableStatement {
     this.consume("LET");
     const declarations = this.VariableDeclarationList();
@@ -252,6 +295,7 @@ export class Parser {
     } while (this.lookAhead?.type === "COMMA" && this.consume("COMMA"));
     return declarations;
   }
+
   private VariableDeclaration(): ASTNode {
     const variableName = this.Identifier();
     const variableInitialValue = !["COMMA", "SEMICOLON"].includes(
@@ -266,16 +310,19 @@ export class Parser {
       variableInitialValue,
     };
   }
+
   protected VariableInitializer(): ASTNode {
     this.consume("ASSIGNEMENT");
     return this.AssignmentExpression();
   }
+
   private Expression(): ASTNode {
     return this.AssignmentExpression();
   }
 
   private AssignmentExpression(): ASTNode {
     const left = this.LogicalOrExpression();
+
     if (!this.isAssignmentOperator(this.lookAhead!.type)) {
       return left;
     }
@@ -307,6 +354,7 @@ export class Parser {
   private isAssignmentOperator(tokenType: TokenType): boolean {
     return this.assignmentOperators.has(tokenType);
   }
+
   private LeftHandSideExpression(): ASTNode {
     return this.PrimaryExpression();
   }
@@ -354,6 +402,7 @@ export class Parser {
     binaryMemo.set(binaryKey, expression);
     return expression;
   }
+
   private createExpressionMethod(
     nextMethod: ExpressionType,
     op: Operator,
@@ -361,6 +410,7 @@ export class Parser {
   ): () => ASTNode {
     return () => this.MainExpression(nextMethod, op, type);
   }
+
   private PrimaryExpression(): ASTNode {
     if (this.isLiteral(this.lookAhead!.type)) return this.Literal();
 
@@ -373,6 +423,7 @@ export class Parser {
         return this.LeftHandSideExpression();
     }
   }
+
   private ParenthesizedExpression(): ASTNode {
     this.consume("LPAREN");
     const expression = this.Expression();
@@ -412,6 +463,7 @@ export class Parser {
 
     return this.CreateLiteral(literalType, value);
   }
+
   private isLiteral(tokenType: TokenType): boolean {
     return this.literals.has(tokenType);
   }
