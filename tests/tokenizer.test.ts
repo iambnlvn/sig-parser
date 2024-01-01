@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { Tokenizer } from "../tokenizer";
+import { Tokenizer } from "../src/tokenizer";
 
 describe("Tokenizer", () => {
   let tokenizer: Tokenizer;
