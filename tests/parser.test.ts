@@ -1473,7 +1473,7 @@ const functionCategory = [
   },
 ];
 
-const MemberCategory = [
+const memberCategory = [
   {
     testName: "should parse Member Expression with dot notation",
     input: "obj.property;",
@@ -1768,6 +1768,217 @@ const callCategory = [
     },
   },
 ];
+const classCategory = [
+  {
+    testName: "should parse class declaration",
+    input: "class User {}",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ClassDeclaration",
+          name: { type: "Identifier", name: "User" },
+          childClass: null,
+          body: { type: "BlockStatement", body: [] },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse class declaration with body",
+    input: `class User {
+      fn hello() {
+        return "Hello, world!";
+      }
+    }`,
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ClassDeclaration",
+          name: { type: "Identifier", name: "User" },
+          childClass: null,
+          body: {
+            type: "BlockStatement",
+            body: [
+              {
+                type: "FunctionDeclaration",
+                name: { type: "Identifier", name: "hello" },
+                params: [],
+                body: {
+                  type: "BlockStatement",
+                  body: [
+                    {
+                      type: "ReturnStatement",
+                      argument: {
+                        type: "StringLiteral",
+                        value: "Hello, world!",
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse class declaration with this keyword",
+    input: `class User {
+      fn hello() {
+        return this.name;
+      }
+    }`,
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ClassDeclaration",
+          name: { type: "Identifier", name: "User" },
+          childClass: null,
+          body: {
+            type: "BlockStatement",
+            body: [
+              {
+                type: "FunctionDeclaration",
+                name: { type: "Identifier", name: "hello" },
+                params: [],
+                body: {
+                  type: "BlockStatement",
+                  body: [
+                    {
+                      type: "ReturnStatement",
+                      argument: {
+                        type: "MemberExpression",
+                        computed: false,
+                        object: { type: "ThisExpression" },
+                        property: { type: "Identifier", name: "name" },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse class declaration with extends",
+    input: `class User extends Person {
+      fn hello() {
+        return "Hello, world!";
+      }
+    }`,
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ClassDeclaration",
+          name: { type: "Identifier", name: "User" },
+          childClass: { type: "Identifier", name: "Person" },
+          body: {
+            type: "BlockStatement",
+            body: [
+              {
+                type: "FunctionDeclaration",
+                name: { type: "Identifier", name: "hello" },
+                params: [],
+                body: {
+                  type: "BlockStatement",
+                  body: [
+                    {
+                      type: "ReturnStatement",
+                      argument: {
+                        type: "StringLiteral",
+                        value: "Hello, world!",
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse class declaration with extends and super",
+    input: `class User extends Person {
+      fn hello() {
+        return "Hello, world!";
+      }
+      super(name);
+    }`,
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "ClassDeclaration",
+          name: { type: "Identifier", name: "User" },
+          childClass: { type: "Identifier", name: "Person" },
+          body: {
+            type: "BlockStatement",
+            body: [
+              {
+                type: "FunctionDeclaration",
+                name: { type: "Identifier", name: "hello" },
+                params: [],
+                body: {
+                  type: "BlockStatement",
+                  body: [
+                    {
+                      type: "ReturnStatement",
+                      argument: {
+                        type: "StringLiteral",
+                        value: "Hello, world!",
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                type: "ExpressionStatement",
+                expression: {
+                  type: "CallExpression",
+                  callee: { type: "SuperExpression" },
+                  arguments: [{ type: "Identifier", name: "name" }],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
+    testName: "should parse class instance declaration",
+    input: "let user = new User();",
+    expected: {
+      type: "Program",
+      body: [
+        {
+          type: "VariableStatement",
+          declarations: [
+            {
+              type: "VariableDeclaration",
+              variableName: { type: "Identifier", name: "user" },
+              variableInitialValue: {
+                type: "NewExpression",
+                callee: { type: "Identifier", name: "User" },
+                arguments: [],
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
+];
 
 describe("Parser", () => {
   let parser: Parser;
@@ -1959,7 +2170,7 @@ describe("Parser", () => {
   });
 
   describe("Member Expression", () => {
-    MemberCategory.map((testCase) => {
+    memberCategory.map((testCase) => {
       test(testCase.testName, () => {
         let parsedMemberExpression = parser.Parse(testCase.input);
 
@@ -1975,6 +2186,17 @@ describe("Parser", () => {
         let parsedCallExpression = parser.Parse(testCase.input);
 
         expect(JSON.stringify(parsedCallExpression)).toEqual(
+          JSON.stringify(testCase.expected)
+        );
+      });
+    });
+  });
+  describe("Class Declaration", () => {
+    classCategory.map((testCase) => {
+      test(testCase.testName, () => {
+        let parsedClassDeclaration = parser.Parse(testCase.input);
+
+        expect(JSON.stringify(parsedClassDeclaration)).toEqual(
           JSON.stringify(testCase.expected)
         );
       });

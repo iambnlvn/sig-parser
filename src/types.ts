@@ -32,8 +32,12 @@ export type TokenType =
   | "RETURN"
   | "LSBRACKET"
   | "RSBRACKET"
-  | "DOT";
-
+  | "DOT"
+  | "CLASS"
+  | "NEW"
+  | "SUPER"
+  | "EXTENDS"
+  | "THIS";
 export type Token = {
   type: TokenType;
   value: string;
@@ -47,7 +51,20 @@ export type Statement =
   | ConditionalStatement
   | IterationStatement
   | FunctionDeclaration
-  | FunctionReturn;
+  | FunctionReturn
+  | ClassDeclaration;
+
+export type StatementTrigger =
+  | "SEMICOLON"
+  | "LBRACE"
+  | "LET"
+  | "IF"
+  | "WHILE"
+  | "DO"
+  | "FOR"
+  | "FUNCTION"
+  | "RETURN"
+  | "CLASS";
 export type EmptyStatement = {
   type: "EmptyStatement";
 };
@@ -81,20 +98,26 @@ export type IterationStatement =
       type: "ForStatement";
       init?: ASTNode | null;
       testCondition?: ASTNode | null;
-      update?: ASTNode | null;
+      update: ASTNode | null;
       body: Statement;
     };
+export type ClassDeclaration = {
+  type: "ClassDeclaration";
+  name: ASTNode;
+  childClass: ASTNode | null;
+  body: Statement;
+};
 
 export type FunctionDeclaration = {
   type: "FunctionDeclaration";
   name: ASTNode;
-  params?: ASTNode[];
+  params: ASTNode[];
   body: Statement;
 };
 
 export type FunctionReturn = {
   type: "ReturnStatement";
-  argument?: ASTNode | null;
+  argument: ASTNode | null;
 };
 export type Program = {
   type: "Program";
@@ -123,15 +146,15 @@ export type ASTNode =
       operator: string;
       argument: ASTNode;
     }
-  | { type: "EmptyStatement" }
+  | { type: "EmptyStatement" | "ThisExpression" | "SuperExpression" }
   | { type: "Identifier"; name: string }
   | {
       type: "VariableDeclaration";
       variableName: ASTNode;
-      variableInitialValue?: ASTNode | null;
+      variableInitialValue: ASTNode | null;
     }
   | {
-      type: "CallExpression";
+      type: "CallExpression" | "NewExpression";
       callee: ASTNode;
       arguments: ASTNode[];
     }
@@ -151,9 +174,7 @@ export type ExpressionType =
   | "EqualityExpression"
   | "LogicalAndExpression"
   | "LogicalOrExpression"
-  | "UnaryExpression"
-  | "MemberExpression"
-  | "CallExpression";
+  | "UnaryExpression";
 
 export type Operator =
   | "ADD_OP"

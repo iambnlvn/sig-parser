@@ -17,27 +17,54 @@ import {
   IterationStatement,
   FunctionDeclaration,
   FunctionReturn,
+  ClassDeclaration,
+  StatementTrigger,
 } from "./types";
 
 export class Parser {
-  protected str: string;
-  protected tokenizer: Tokenizer | null;
-  protected ExpressionMethods: Map<ExpressionType, Function>;
-  private lookAhead: Token | null;
-  protected assignmentOperators = new Set(["ASSIGNEMENT", "COMPLEXASSIGNMENT"]);
-  protected literals = new Set(["NUMBER", "STRING", "TRUE", "FALSE", "NILL"]);
-  protected binaryMemo = new Map<string, ASTNode>();
-  protected tokenTypeToLiteralType: Record<TokenLiterals, LiteralType> = {
-    NUMBER: "NumericLiteral",
-    STRING: "StringLiteral",
-    TRUE: "BooleanLiteral",
-    FALSE: "BooleanLiteral",
-    NILL: "NillLiteral",
+  private readonly assignmentOperators = new Set([
+    "ASSIGNEMENT",
+    "COMPLEXASSIGNMENT",
+  ]);
+  private readonly literals = new Set([
+    "NUMBER",
+    "STRING",
+    "TRUE",
+    "FALSE",
+    "NILL",
+  ]);
+
+  private readonly statementHandlers: Record<StatementTrigger, Function> = {
+    SEMICOLON: this.EmptyStatement,
+    LBRACE: this.BlockStatement,
+    LET: this.VariableStatement,
+    IF: this.ConditionalStatement,
+    WHILE: this.IterationStatement,
+    DO: this.IterationStatement,
+    FOR: this.IterationStatement,
+    FUNCTION: this.FunctionDeclaration,
+    RETURN: this.FunctionReturn,
+    CLASS: this.ClassDeclaration,
   };
+
+  private readonly tokenTypeToLiteralType: Record<TokenLiterals, LiteralType> =
+    {
+      NUMBER: "NumericLiteral",
+      STRING: "StringLiteral",
+      TRUE: "BooleanLiteral",
+      FALSE: "BooleanLiteral",
+      NILL: "NillLiteral",
+    };
+  private binaryMemo = new Map<string, ASTNode>();
+  private lookAhead: Token | null;
+  private str: string;
+  private tokenizer: Tokenizer | null;
+  private readonly ExpressionMethods: Map<ExpressionType, Function>;
   constructor() {
+    this.lookAhead = null;
     this.str = "";
     this.tokenizer = null;
-    this.lookAhead = null;
+
     this.ExpressionMethods = new Map([
       ["PrimaryExpression", this.PrimaryExpression],
       ["MulExpression", this.MulExpression],
@@ -122,26 +149,12 @@ export class Parser {
   }
 
   private Statement(): Statement {
-    switch (this.lookAhead?.type) {
-      case "SEMICOLON":
-        return this.EmptyStatement();
-      case "LBRACE":
-        return this.BlockStatement();
-      case "LET":
-        return this.VariableStatement();
-      case "IF":
-        return this.ConditionalStatement();
-      case "WHILE":
-      case "DO":
-      case "FOR":
-        return this.IterationStatement();
-      case "FUNCTION":
-        return this.FunctionDeclaration();
-      case "RETURN":
-        return this.FunctionReturn();
-      default:
-        return this.ExpressionStatement();
+    const handler =
+      this.statementHandlers[this.lookAhead!.type as StatementTrigger];
+    if (handler) {
+      return handler.call(this);
     }
+    return this.ExpressionStatement();
   }
 
   private BlockStatement(): BlockStatement {
@@ -186,6 +199,26 @@ export class Parser {
       alternate,
     };
   }
+
+  private ClassDeclaration(): ClassDeclaration {
+    this.consume("CLASS");
+    const name = this.Identifier();
+    const childClass =
+      this.lookAhead?.type === "EXTENDS" ? this.ChildClassExpression() : null;
+
+    const body = this.BlockStatement();
+    return {
+      type: "ClassDeclaration",
+      name,
+      childClass,
+      body,
+    };
+  }
+  private ChildClassExpression(): ASTNode {
+    this.consume("EXTENDS");
+    return this.Identifier();
+  }
+
   private IterationStatement(): IterationStatement {
     switch (this.lookAhead?.type) {
       case "WHILE":
@@ -288,7 +321,7 @@ export class Parser {
     };
   }
 
-  protected VariableDeclarationList(): ASTNode[] {
+  private VariableDeclarationList(): ASTNode[] {
     let declarations: ASTNode[] = [];
     do {
       declarations.push(this.VariableDeclaration());
@@ -311,7 +344,7 @@ export class Parser {
     };
   }
 
-  protected VariableInitializer(): ASTNode {
+  private VariableInitializer(): ASTNode {
     this.consume("ASSIGNEMENT");
     return this.AssignmentExpression();
   }
@@ -356,6 +389,9 @@ export class Parser {
   }
 
   private CallMemberExpression(): ASTNode {
+    if (this.lookAhead?.type === "SUPER") {
+      return this.CallExpresion(this.Super());
+    }
     const member = this.MemberExpression();
     if (this.lookAhead?.type === "LPAREN") {
       return this.CallExpresion(member);
@@ -435,7 +471,7 @@ export class Parser {
     };
   }
 
-  protected MainExpression(
+  private MainExpression(
     expType: ExpressionType,
     op: Operator,
     type: "BinaryExpression" | "LogicalExpression"
@@ -488,11 +524,35 @@ export class Parser {
         return this.ParenthesizedExpression();
       case "IDENTIFIER":
         return this.Identifier();
+      case "THIS":
+        return this.ThisExpression();
+      case "NEW":
+        return this.NewExpression();
       default:
         return this.LeftHandSideExpression();
     }
   }
+  private ThisExpression(): ASTNode {
+    this.consume("THIS");
+    return {
+      type: "ThisExpression",
+    };
+  }
 
+  private Super(): ASTNode {
+    this.consume("SUPER");
+    return {
+      type: "SuperExpression",
+    };
+  }
+  private NewExpression(): ASTNode {
+    this.consume("NEW");
+    return {
+      type: "NewExpression",
+      callee: this.MemberExpression(),
+      arguments: this.Arguments(),
+    };
+  }
   private ParenthesizedExpression(): ASTNode {
     this.consume("LPAREN");
     const expression = this.Expression();
