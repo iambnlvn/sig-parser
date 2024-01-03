@@ -135,7 +135,11 @@ log("error");
 fn sayHi() {
     return "Hi,mom";
 }
-sayHi("hi,mom");
+sayHi();
+fn add(a,b,c) {
+    return a+b+c;
+}
+add(13,12,2);
 
 ```
 
