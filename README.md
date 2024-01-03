@@ -128,9 +128,13 @@ let v,w,x,y,z = 10;//multiple declaration
 
 ```rust
 fn log(name) {
-return name;
+    return name;
 }
+log("error");
 
+fn sayHi() {
+    return "Hi,mom";
+}
 sayHi("hi,mom");
 
 ```
@@ -144,14 +148,15 @@ class Person {
 }
 class User extends Person{
 //constructor not supported yet so the parser will treat it as a function
-let a = 10;
+    let a = 10;
     this.saySomethingNice() {
     }
     fn method(){
         return nill;
     }
-super();
+    super();
 }
+
 let user = new User();
 user.method();// non computed values
 user["method"]();// computed values
@@ -193,7 +198,7 @@ do {
 if (x > 1) {
   print(x);
 } else if (x < 1) {
-  print(x);
+  print(x*2);
 } else {
   print(x);
 }
