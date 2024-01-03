@@ -160,7 +160,12 @@ user["method"]();// computed values
 ### Comparisons
 
 ```javascript
-
+x > y;
+x < y;
+x >= y;
+x <= y;
+x == y;
+x != y;
 ```
 
 ### Loops
