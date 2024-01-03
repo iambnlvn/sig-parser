@@ -39,7 +39,7 @@ $ bun ./cli/main.ts -f hello.sigx
 Example: with inline string input:
 
 ```bash
-$ bun ./cli/main.ts "class User { name: string; }"
+$ bun ./cli/main.ts -i "class User { let name = "Sig"; }"
 ```
 
 **Options**
@@ -97,8 +97,8 @@ Sig supports single line comments and multi line comments.
 ### Variables
 
 Sig supports variable declaration and assignment.
-only let keyword is supported for variable declaration (cuz why not).
-Semicolons are required for every expression
+only `let` keyword is supported for variable declaration (cuz why not).
+Semicolons are required for every expression;
 
 ```javascript
 let a = 10;
@@ -106,20 +106,20 @@ let b = "hello";
 let c = true;
 let d= false;
 let e = 10.5;
-let f +=11;//not correctly working
-let g -=1;// not correctly working
-let h *=90;// not correctly working
-let i /=69;//not correctly working
+let f +=11; //not correctly working
+let g -=1; // not correctly working
+let h *=90; // not correctly working
+let i /=69; //not correctly working
 let j %=132; //this is not supported neither will be implemented cuz that's just weird n uhgly
 let k=l=89;
-let m = 23>a;//boolean
-let n = 25<b;//boolean
-let o = 200>=a;//boolean
-let p = 289<=a;//boolean
-let q = 77==a;//boolean
-let r = 234!=a;//boolean
-let s = 2 ||d;
-let t = 2 &&d;
+let m = 23>a; //boolean
+let n = 25<b; //boolean
+let o = 200>=a; //boolean
+let p = 289<=a; //boolean
+let q = 77==a; //boolean
+let r = 234!=a; //boolean
+let s = 2 ||d; //boolean
+let t = 2 &&d; //boolean
 let u = nill;// that's how you declare null; kinda way cooler than null
 let v,w,x,y,z = 10;//multiple declaration
 ```
