@@ -1,0 +1,55 @@
+let user = "iambnlvn";
+fn sayHi(user) {
+    return "hi,"+ user;
+}
+let x;
+if(!true && !x) {
+let x += 11;
+} else {
+    ++x;
+}
+for(let i=1;i <12;i++1) {
+    log(i);
+    return nill;
+}
+while(isDumb() || isBroke()) {
+    return nill;
+}
+do{
+    think();
+}
+while(brain);
+
+class Data extends File {
+    fn readData() {
+        let data = this['prop'].a;
+        return file.data;
+    }
+    fn log() {
+        return this.logEntries;
+    }
+    super(extension,size);
+}
+let a,b = 12;
+let a = new thing();
+let a = 10;
+let b = "hello";
+let c = true;
+let d= false;
+let e = 10.5;
+let f +=11;
+let g -=1;
+let h *=90;
+let i /=69;
+ //this is not supported cuz that's just weird n uhgly
+let k=l=89;
+let m = 23>a;//boolean
+let n = 25<b;//boolean
+let o = 200>=a;//boolean
+let p = 289<=a;//boolean
+let q = 77==a;//boolean
+let r = 234!=a;//boolean
+let s = 2 ||d;
+let t = 2 &&d;
+let u = nill;// that's how you declare null; kinda way cooler than null
+let v,w,x,y,z = 10;//multiple declaration
