@@ -345,7 +345,8 @@ export class Parser {
   }
 
   private VariableInitializer(): ASTNode {
-    this.consume("ASSIGNEMENT");
+    //this can consumr both ASSIGNEMENT and COMPLEXASSIGNMENT
+    this.consume(this.lookAhead!.type);
     return this.AssignmentExpression();
   }
 
