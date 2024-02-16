@@ -45,8 +45,6 @@ let i /=69;
 let k=l=89;
 let m = 23>a;//boolean
 let n = 25<b;//boolean
-let o = 200>=a;//boolean
-let p = 289<=a;//boolean
 let q = 77==a;//boolean
 let r = 234!=a;//boolean
 let s = 2 ||d;

@@ -45,6 +45,7 @@ $ bun ./cli/main.ts -i "class User { let name = "Sig"; }"
 **Options**
 
 -f, --file : path to the file to be parsed <br>
+-o, --output : output the AST to a file <br>
 -i, --inline : inline string input to be parsed <br>
 -s, --spacing : spacing to be used for the output <br>
 -h, --help : display help for command <br>
@@ -101,25 +102,24 @@ only `let` keyword is supported for variable declaration (cuz why not).
 Semicolons are required for every expression;
 
 ```javascript
+let a,b = 12;
+let a = new thing();
 let a = 10;
 let b = "hello";
 let c = true;
 let d= false;
 let e = 10.5;
-let f +=11; //not correctly working
-let g -=1; // not correctly working
-let h *=90; // not correctly working
-let i /=69; //not correctly working
-let j %=132; //this is not supported neither will be implemented cuz that's just weird n uhgly
+let f +=11;
+let g -=1;
+let h *=90;
+let i /=69;
 let k=l=89;
-let m = 23>a; //boolean
-let n = 25<b; //boolean
-let o = 200>=a; //boolean
-let p = 289<=a; //boolean
-let q = 77==a; //boolean
-let r = 234!=a; //boolean
-let s = 2 ||d; //boolean
-let t = 2 &&d; //boolean
+let m = 23>a;//boolean
+let n = 25<b;//boolean
+let q = 77==a;//boolean
+let r = 234!=a;//boolean
+let s = 2 ||d;
+let t = 2 &&d;
 let u = nill;// that's how you declare null; kinda way cooler than null
 let v,w,x,y,z = 10;//multiple declaration
 ```
@@ -202,7 +202,7 @@ do {
 if (x > 1) {
   print(x);
 } else if (x < 1) {
-  print(x*2);
+  print(x * 2);
 } else {
   print(x);
 }

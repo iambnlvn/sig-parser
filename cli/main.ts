@@ -2,9 +2,10 @@ import { Command } from "commander";
 import { Parser } from "../src/parser";
 
 const program = new Command();
-
+const SUPPORTED_OUTPUT_FILE_EXTENSIONS = ["json", "txt"];
 program
   .option("-f, --file <type>", "File input")
+  .option("-o, --output <type>", "output the AST into a file")
   .showHelpAfterError("Please provide a file or string input")
   .option("-i, --inline <type>", "inline string input")
   .option("-s, --spacing", "spacing inside the output ast")
@@ -24,12 +25,19 @@ const handleReadingFile = (input: string) => {
     parseInput(input);
   }
 };
+
 const checkValidFileExtension = (file: string): boolean => {
   return file.split(".").pop() === "sigx";
 };
 
 const readFromFile = async (file: string): Promise<string> => {
-  return await Bun.file(file).text();
+  let data = "";
+  const decoder = new TextDecoder("utf-8");
+  const stream = Bun.file(file).stream();
+  for await (const chunk of stream) {
+    data += decoder.decode(chunk);
+  }
+  return data;
 };
 
 const parseInput = async (input: string): Promise<void> => {
@@ -44,6 +52,17 @@ const parseInput = async (input: string): Promise<void> => {
   }
 
   let jsonAST = JSON.stringify(ast, null, options.s || 2);
-  console.log(jsonAST);
+  if (options.output) {
+    if (
+      SUPPORTED_OUTPUT_FILE_EXTENSIONS.includes(options.output.split(".").pop())
+    ) {
+      const outfile = Bun.file(options.output);
+      const writer = outfile.writer();
+      writer.write(jsonAST);
+      writer.end();
+    }
+  } else {
+    console.log(jsonAST);
+  }
 };
 handleReadingFile(input);
