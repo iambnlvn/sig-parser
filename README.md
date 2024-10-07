@@ -58,7 +58,7 @@ _Note that the cli prioritizes file inputs when both inline string & file are en
 To build an executable(outputFile = sig), run:
 
 ```bash
-$ bun exec
+$ bun execute
 ```
 
 Command format:

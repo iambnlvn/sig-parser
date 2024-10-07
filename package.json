@@ -14,7 +14,7 @@
   },
   "scripts": {
     "build": "bun build ./cli/main.ts --target bun",
-    "exec": "bun build ./cli/main.ts --target bun --compile  --outfile sig"
+    "execute": "bun build ./cli/main.ts --target bun --compile  --outfile sig"
   },
   "devDependencies": {
     "bun-types": "latest"
