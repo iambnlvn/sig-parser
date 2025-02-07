@@ -3,31 +3,28 @@ import { Parser } from "../src/parser";
 
 const program = new Command();
 const SUPPORTED_OUTPUT_FILE_EXTENSIONS = ["json", "txt"];
+
 program
-  .option("-f, --file <type>", "File input")
-  .option("-o, --output <type>", "output the AST into a file")
-  .showHelpAfterError("Please provide a file or string input")
-  .option("-i, --inline <type>", "inline string input")
-  .option("-s, --spacing", "spacing inside the output ast")
   .version("0.0.1")
-  .helpOption("-h, --help", "Display help for command");
+  .option("-f, --file <file>", "Input file path")
+  .option("-i, --inline <input>", "Inline string input")
+  .option("-o, --output <file>", "Output the AST into a file")
+  .option("-s, --spacing", "Use extra spacing in the AST output", false)
+  .helpOption("-h, --help", "Display help for command")
+  .showHelpAfterError("Please provide a file or string input");
 
 program.parse(process.argv);
-
 const options = program.opts();
-
 const input = options.file || options.inline;
-const handleReadingFile = (input: string) => {
-  if (!input) {
-    console.error("Please provide a file or string input");
-    process.exit(1);
-  } else {
-    parseInput(input);
-  }
+
+const isFileInput = (input: string): boolean => {
+  return input.endsWith(".sigx");
 };
 
-const checkValidFileExtension = (file: string): boolean => {
-  return file.split(".").pop() === "sigx";
+const isValidOutputExtension = (file: string): boolean => {
+  const ext = file.split(".").pop();
+  if(!ext) return false;
+  return SUPPORTED_OUTPUT_FILE_EXTENSIONS.includes(ext);
 };
 
 const readFromFile = async (file: string): Promise<string> => {
@@ -40,29 +37,46 @@ const readFromFile = async (file: string): Promise<string> => {
   return data;
 };
 
+const writeToFile = async (file: string, content: string): Promise<void> => {
+  const outfile = Bun.file(file);
+  const writer = outfile.writer();
+  writer.write(content);
+  writer.end();
+};
+
 const parseInput = async (input: string): Promise<void> => {
   const parser = new Parser();
-  let ast;
+  let inputContent: string;
 
-  if (checkValidFileExtension(input)) {
-    const inputTxt = await readFromFile(input);
-    ast = parser.Parse(inputTxt);
+  if (isFileInput(input)) {
+    inputContent = await readFromFile(input);
   } else {
-    ast = parser.Parse(input);
+    inputContent = input;
   }
 
-  let jsonAST = JSON.stringify(ast, null, options.s || 2);
+  const ast = parser.Parse(inputContent);
+  const spacing = options.spacing ? 2 : undefined;
+  const jsonAST = JSON.stringify(ast, null, spacing);
+
   if (options.output) {
-    if (
-      SUPPORTED_OUTPUT_FILE_EXTENSIONS.includes(options.output.split(".").pop())
-    ) {
-      const outfile = Bun.file(options.output);
-      const writer = outfile.writer();
-      writer.write(jsonAST);
-      writer.end();
+    if (isValidOutputExtension(options.output)) {
+      await writeToFile(options.output, jsonAST);
+    } else {
+      console.error("Unsupported output file extension.");
+      process.exit(1);
     }
   } else {
     console.log(jsonAST);
   }
 };
-handleReadingFile(input);
+
+const run = async () => {
+  if (!input) {
+    console.error("Please provide a file or string input.");
+    program.help();
+    process.exit(1);
+  }
+  await parseInput(input);
+};
+
+run();
