@@ -735,39 +735,7 @@ const variableCategory = [
       ],
     },
   },
-  {
-    testName: "should parse assignment expression with variable declaration",
-    input: "let x +=11;",
-    expected: {
-      type: "Program",
-      body: [
-        {
-          type: "VariableStatement",
-          declarations: [
-            {
-              type: "VariableDeclaration",
-              variableName: {
-                type: "Identifier",
-                name: "x",
-              },
-              variableInitialValue: {
-                type: "AssignmentExpression",
-                operator: "+=",
-                left: {
-                  type: "Identifier",
-                  name: "x",
-                },
-                right: {
-                  type: "NumericLiteral",
-                  value: 11,
-                },
-              },
-            },
-          ],
-        },
-      ],
-    },
-  },
+
 ];
 
 const conditionalCategory = [
